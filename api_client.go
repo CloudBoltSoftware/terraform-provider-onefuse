@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+const ApiVersion = "/api/v3/"
+const ApiNamespace = "onefuse"
 const NamingResourceType = "customNames"
 const WorkspaceResourceType = "workspaces"
 
@@ -59,9 +61,9 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(dnsSuffix string, namingPo
 	}
 
 	postBody := map[string]interface{}{
-		"namingPolicy":       fmt.Sprintf("/api/v3/namingPolicies/%s/", namingPolicyID),
+		"namingPolicy":       fmt.Sprintf("%s%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
 		"templateProperties": templateProperties,
-		"workspace":          fmt.Sprintf("/api/v3/workspaces/%s/", workspaceID),
+		"workspace":          fmt.Sprintf("%s%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
 	}
 	var jsonBytes []byte
 	jsonBytes, err = json.Marshal(postBody)
@@ -224,12 +226,12 @@ func setHeaders(req *http.Request, config *Config) {
 func collectionURL(config *Config, resourceType string) string {
 	address := config.address
 	port := config.port
-	return config.scheme + "://" + address + ":" + port + "/api/v3/" + resourceType + "/"
+	return config.scheme + "://" + address + ":" + port + ApiVersion + ApiNamespace + "/" + resourceType + "/"
 }
 
 func itemURL(config *Config, resourceType string, id int) string {
 	address := config.address
 	port := config.port
 	idString := strconv.Itoa(id)
-	return config.scheme + "://" + address + ":" + port + "/api/v3/" + resourceType + "/" + idString + "/"
+	return config.scheme + "://" + address + ":" + port + ApiVersion + ApiNamespace + "/" + resourceType + "/" + idString + "/"
 }
