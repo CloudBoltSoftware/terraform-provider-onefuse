@@ -1,0 +1,7 @@
+*.tfstate
+crash.log
+.idea
+*.iml
+.terraform
+terraform-provider-*
+terraform.tfstate.backup
