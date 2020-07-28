@@ -20,10 +20,6 @@ variable "onefuse_naming_policy_id" {
     default = 2
 }
 
-variable "onefuse_dns_suffix" {
-    type = string
-}
-
 variable "vsphere_user" {
 	type = string
 }

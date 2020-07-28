@@ -8,6 +8,5 @@ provider "onefuse" {
 
 resource "onefuse_naming" "my-onefuse-name" {
   naming_policy_id        = var.onefuse_naming_policy_id
-  dns_suffix              = var.onefuse_dns_suffix
   template_properties     = var.onefuse_template_properties
 }

@@ -49,12 +49,12 @@ func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	}
 }
 
-func (apiClient *OneFuseAPIClient) GenerateCustomName(dnsSuffix string, namingPolicyID string, workspaceID string,
+func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, workspaceID string,
 	templateProperties map[string]interface{}) (result *CustomName, err error) {
 
 	config := apiClient.config
 	url := collectionURL(config, NamingResourceType)
-	log.Println("reserving custom name from " + url + "  dnsSuffix=" + dnsSuffix)
+	log.Println("reserving custom name from " + url)
 
 	if templateProperties == nil {
 		templateProperties = make(map[string]interface{})
@@ -98,9 +98,7 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(dnsSuffix string, namingPo
 		return
 	}
 
-	checkForErrors(res)
-
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := readResponse(res)
 	if err != nil {
 		return
 	}
@@ -178,11 +176,8 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 		return
 	}
 
-	checkForErrors(res)
-
-	body, clientErr := ioutil.ReadAll(res.Body)
-	if clientErr != nil {
-		err = clientErr
+	body, err := readResponse(res)
+	if err != nil {
 		return
 	}
 
@@ -205,8 +200,18 @@ func getHttpClient(config *Config) *http.Client {
 	return &http.Client{Transport: tr}
 }
 
+func readResponse(res *http.Response) (bytes []byte, err error) {
+	err = checkForErrors(res)
+	if err != nil {
+		return
+	}
+
+	bytes, err = ioutil.ReadAll(res.Body)
+	return
+}
+
 func checkForErrors(res *http.Response) error {
-	if res.StatusCode >= 500 {
+	if res.StatusCode >= 400 {
 		b, _ := ioutil.ReadAll(res.Body)
 		return errors.New(string(b))
 	}

@@ -38,7 +38,8 @@ func resourceCustomNaming() *schema.Resource {
 			},
 			"dns_suffix": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"workspace_id": {
 				Type:     schema.TypeString,
@@ -57,11 +58,10 @@ func resourceCustomNameCreate(d *schema.ResourceData, m interface{}) error {
 	log.Println("calling resourceCustomNameCreate")
 
 	config := m.(Config)
-	dnsSuffix := d.Get("dns_suffix").(string)
 	namingPolicyID := d.Get("naming_policy_id").(string)
 	workspaceID := d.Get("workspace_id").(string)
 	templateProperties := d.Get("template_properties").(map[string]interface{})
-	cn, err := config.NewOneFuseApiClient().GenerateCustomName(dnsSuffix, namingPolicyID, workspaceID, templateProperties)
+	cn, err := config.NewOneFuseApiClient().GenerateCustomName(namingPolicyID, workspaceID, templateProperties)
 	if err != nil {
 		return err
 	}
