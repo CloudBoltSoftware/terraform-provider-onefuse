@@ -24,26 +24,26 @@ provider "vsphere" {
 
 #Data Sources
 data "vsphere_datacenter" "dc" {
-  name = "replace_with_dc_name"
+  name = var.vsphere_datacenter
 }
 
 data "vsphere_datastore_cluster" "datastore_cluster" {
-  name          = "replace_with_datastor_name"
+  name          = var.vsphere_datastore_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
  
 data "vsphere_compute_cluster" "cluster" {
-  name          = "replace_with_cluster_name"
+  name          = var.vsphere_compute_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
  
 data "vsphere_network" "network" {
-  name          = "replace_with_portgroup_name"
+  name          = var.vsphere_network
   datacenter_id = data.vsphere_datacenter.dc.id
 }
  
 data "vsphere_virtual_machine" "template" {
-  name          = "replace_with_template_name"
+  name          = var.vsphere_virtual_machine
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
@@ -57,7 +57,7 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
 	
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_cluster_id = data.vsphere_datastore_cluster.datastore_cluster.id
-  folder = "replace_with_folder_path"
+  folder = var.vsphereweb1_folder
  
   num_cpus = 1
   memory   = 512
@@ -87,11 +87,11 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
       }
  
       network_interface {
-        ipv4_address = "replace_with_ip"
+        ipv4_address = var.vsphereweb1_ip
         ipv4_netmask = 24
       }
  
-      ipv4_gateway = "replace_with_gateway_address"
+      ipv4_gateway = var.vsphereweb1_gateway
     }
   }
 }
