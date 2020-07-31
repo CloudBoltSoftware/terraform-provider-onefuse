@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 USAGE="Usage: build.sh -o|--output NAME [--basedir terraform-provider-onefuse] [--darwin] [--linux] [--windows] [--sha256sum]"
 GOARCH="amd64"
