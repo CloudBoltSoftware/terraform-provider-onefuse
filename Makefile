@@ -1,10 +1,11 @@
 PKGNAME := onefuse
 PLUGIN_EXECUTABLE := terraform-provider-$(PKGNAME)
 cat := $(if $(filter $(OS),Windows_NT),type,cat)
-VERSION := $(strip $(shell $(cat) VERSION))
 ifeq ($(OS),Windows_NT)
+	VERSION := $(strip $(Get-Content -Path .\VERSION))
 	PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION).exe
 else
+	VERSION := $(strip $(shell cat VERSION))
 	PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION)
 endif
 TF_PLUGINS_DIR := $$HOME/.terraform.d/plugins
