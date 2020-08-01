@@ -22,7 +22,8 @@ If you have a bugfix or feature you would like to contribute, please make a Pull
 2. Add your work to that fork.
 3. Add automated tests, where possible.
 4. Ensure that automated tests continue to pass.
-5. Make a Pull Request to the main repository.
+5. Run `make fmt` on your code and commit any changes it makes.
+6. Make a Pull Request to the main repository.
 
 For large feature work, you should make an Issue before starting work on the feature, as a place to discuss implementation details.
 

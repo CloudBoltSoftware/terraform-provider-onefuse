@@ -17,21 +17,24 @@ $ cd $GOPATH/src/github.com/CloudBoltSoftware
 $ git clone https://github.com/CloudBoltSoftware/terraform-provider-onefuse.git
 ```
 
-Enter the provider directory and build the provider
+Enter the provider directory and install the provider's dependencies
 
 ```sh
 $ cd $GOPATH/src/github.com/CloudBoltSoftware/terraform-provider-onefuse.git
-$ make build
-```
-
-To install the provider, create the `$HOME/.terraform.d/plugins/` directory and run the `make install` command:
-
-```sh
-$ mkdir $HOME/.terraform.d/plugins/
 $ make install
 ```
 
+To build the provider binary, create the `$HOME/.terraform.d/plugins/` directory and run the `make install` command:
+
+```sh
+$ make build
+$ mkdir $HOME/.terraform.d/plugins/
+$ mv terraform-provider-onefuse_v* $HOME/.terraform.d/plugins/
+```
+
 Then copy the binary to your terraform plugins directory
+
+_You may want to use Make 4.3+ to ensure all make features work._
 
 ## Using the provider
 
