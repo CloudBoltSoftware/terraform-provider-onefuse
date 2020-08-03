@@ -1,6 +1,5 @@
 PKGNAME := onefuse
 PLUGIN_EXECUTABLE := terraform-provider-$(PKGNAME)
-cat := $(if $(filter $(OS),Windows_NT),type,cat)
 VERSION := $(strip $(file < VERSION))  # `file` may be a Make 4.3+ feature
 ifeq ($(OS),Windows_NT)
 	PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION).exe
