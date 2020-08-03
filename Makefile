@@ -1,32 +1,42 @@
-PKGNAME=onefuse
-PLUGIN_EXECUTABLE=terraform-provider-$(PKGNAME)
-VERSION=$$(cat VERSION)
-PLUGIN_RELEASE_EXECUTABLE=$(PLUGIN_EXECUTABLE)_v$(VERSION)
-TF_PLUGINS_DIR=$(HOME)/.terraform.d/plugins/
-
-GOFMT_FILES?=$$(find . -name '*.go' -not -path './vendor/*' -not -path './go/*')
+PKGNAME := onefuse
+PLUGIN_EXECUTABLE := terraform-provider-$(PKGNAME)
+VERSION := $(file < VERSION)  # `file` may be a Make 4.3+ feature
+ifeq ($(OS),Windows_NT)
+	PLUGIN_RELEASE_EXECUTABLE := $(strip $(PLUGIN_EXECUTABLE)_v$(VERSION)).exe
+else
+	PLUGIN_RELEASE_EXECUTABLE := $(strip $(PLUGIN_EXECUTABLE)_v$(VERSION))
+endif
+TF_PLUGINS_DIR := $$HOME/.terraform.d/plugins
 
 default: build
 
 # Build the plugin
-build: fmtcheck
+install:
 	go install
 
 # Build the provider and copy it to your local terraform plugins directory for local integratin testing
-install: fmtcheck
-	go build -o $(PLUGIN_EXECUTABLE)
-	mv $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
+build: install
+	go build -o $(PLUGIN_RELEASE_EXECUTABLE)
+	echo Move $(PLUGIN_RELEASE_EXECUTABLE) to $(TF_PLUGINS_DIR)
 
 # Format code
 fmt:
-	gofmt -w $(GOFMT_FILES)
+	gofmt -w main.go
+	gofmt -w onefuse
 
 # Verify code conforms to gofmt standards
 fmtcheck:
-	test -n $$(gofmt -l $(GOFMT_FILES))
+	@gofmt -l main.go
+	@gofmt -l onefuse
+ifneq ($(strip $(gofmt -l main.go)),)
+	@exit 1
+endif
+ifneq ($(strip $(gofmt -l onefuse)),)
+	@exit 1
+endif
 
 release-%: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/build.sh' --$* --sha256sum --output $(PLUGIN_RELEASE_EXECUTABLE) --basedir release/terraform-provider-onefuse"
+	scripts/build.sh --$* --sha256sum --output $(PLUGIN_RELEASE_EXECUTABLE) --basedir release/terraform-provider-onefuse
 
 release: release-darwin release-linux release-windows
 
