@@ -1,10 +1,10 @@
 PKGNAME := onefuse
 PLUGIN_EXECUTABLE := terraform-provider-$(PKGNAME)
-VERSION := $(strip $(file < VERSION))  # `file` may be a Make 4.3+ feature
+VERSION := $(file < VERSION)  # `file` may be a Make 4.3+ feature
 ifeq ($(OS),Windows_NT)
-	PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION).exe
+	PLUGIN_RELEASE_EXECUTABLE := $(strip $(PLUGIN_EXECUTABLE)_v$(VERSION)).exe
 else
-	PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION)
+	PLUGIN_RELEASE_EXECUTABLE := $(strip $(PLUGIN_EXECUTABLE)_v$(VERSION))
 endif
 TF_PLUGINS_DIR := $$HOME/.terraform.d/plugins
 
