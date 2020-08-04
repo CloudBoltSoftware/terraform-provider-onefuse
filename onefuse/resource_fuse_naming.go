@@ -102,6 +102,5 @@ func resourceCustomNameUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceCustomNameDelete(d *schema.ResourceData, m interface{}) error {
 	config := m.(Config)
 	id := d.Get("custom_name_id").(int)
-	config.NewOneFuseApiClient().DeleteCustomName(id)
-	return nil
+	return config.NewOneFuseApiClient().DeleteCustomName(id)
 }
