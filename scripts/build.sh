@@ -43,7 +43,7 @@ done
 if [[ -z $OUTPUT || (-z $DARWIN && -z $LINUX && -z $WINDOWS) ]];
 then
     echo $USAGE;
-    exit 1
+    exit 1;
 fi
 
 build_os_pkg() {
