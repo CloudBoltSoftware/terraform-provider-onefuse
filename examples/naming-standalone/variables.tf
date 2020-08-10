@@ -6,13 +6,16 @@ variable "onefuse_password" {
   type = string
 }
 
+variable "onefuse_scheme" {
+  type = string
+}
+
 variable "onefuse_address" {
   type = string
 }
 
 variable "onefuse_port" {
   type = string
-  default = "443"
 }
 
 variable "onefuse_naming_policy_id" {

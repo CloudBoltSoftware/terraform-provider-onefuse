@@ -4,8 +4,10 @@ Terraform Provider for integrating with [SovLabs OneFuse](https://www.sovlabs.co
 
 ## Requirements
 
-* [Terraform](https://www.terraform.io/downloads.html) 0.12.x
+* [Terraform](https://www.terraform.io/downloads.html) 0.13.x
 * [Go](https://golang.org/doc/install) >= 1.14 (to build the provider plugin)
+
+*Note*: _Onefuse will drop support for Terraform 0.12.x after the release of Terraform Provider for OneFuse 1.0.1._
 
 ## Building the provider
 
@@ -50,7 +52,7 @@ provider "onefuse" {
   port        = "8000"
   user        = "admin"
   password    = "my-password"
-  scheme      = "http"
+  scheme      = "https"
   verify_ssl  = false
 }
 

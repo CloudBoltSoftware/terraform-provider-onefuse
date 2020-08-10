@@ -13,6 +13,12 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"scheme": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ONEFUSE_SCHEME", "https"),
+				Description: "OneFuse REST endpoint service http(s) scheme",
+			},
 			"address": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -46,7 +52,12 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"onefuse_naming": resourceCustomNaming(),
+			"onefuse_naming":                        resourceCustomNaming(),
+			"onefuse_microsoft_ad_policy":           resourceMicrosoftADPolicy(),
+			"onefuse_microsoft_ad_computer_account": resourceMicrosoftADComputerAccount(),
+		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
 		},
 		ConfigureFunc: configureProvider,
 	}
@@ -62,12 +73,23 @@ type Config struct {
 }
 
 func configureProvider(d *schema.ResourceData) (interface{}, error) {
+	return NewConfig(
+		d.Get("scheme").(string),
+		d.Get("address").(string),
+		d.Get("port").(string),
+		d.Get("user").(string),
+		d.Get("password").(string),
+		d.Get("verify_ssl").(bool),
+	), nil
+}
+
+func NewConfig(scheme string, address string, port string, user string, password string, verifySSL bool) Config {
 	return Config{
-		scheme:    "https",
-		address:   d.Get("address").(string),
-		port:      d.Get("port").(string),
-		user:      d.Get("user").(string),
-		password:  d.Get("password").(string),
-		verifySSL: d.Get("verify_ssl").(bool),
-	}, nil
+		scheme:    scheme,
+		address:   address,
+		port:      port,
+		user:      user,
+		password:  password,
+		verifySSL: verifySSL,
+	}
 }

@@ -9,19 +9,24 @@ package onefuse
 import (
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-const ApiVersion = "/api/v3/"
+const ApiVersion = "api/v3"
 const ApiNamespace = "onefuse"
 const NamingResourceType = "customNames"
 const WorkspaceResourceType = "workspaces"
+const MicrosoftADPolicyResourceType = "microsoftADPolicies"
+const MicrosoftADComputerAccountResourceType = "microsoftADComputerAccounts"
+const ModuleEndpointResourceType = "endpoints"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -34,13 +39,78 @@ type CustomName struct {
 	DnsSuffix string
 }
 
+type LinkRef struct {
+	Href  string `json:"href,omitempty"`
+	Title string `json:"title,omitempty"`
+}
+
+type Workspace struct {
+	Links *struct {
+		Self LinkRef `json:"self,omitempty"`
+	} `json:"_links,omitempty"`
+	ID   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 type WorkspacesListResponse struct {
 	Embedded struct {
-		Workspaces []struct {
-			Name string `json:"name"`
-			ID   int    `json:"id"`
-		} `json:"workspaces`
+		Workspaces []Workspace `json:"workspaces"`
 	} `json:"_embedded"`
+}
+
+type EndpointsListResponse struct {
+	Embedded struct {
+		Endpoints []MicrosoftEndpoint `json:"endpoints"` // TODO: Generalize to Endpoints
+	} `json:"_embedded"`
+}
+
+type MicrosoftEndpoint struct {
+	Links *struct {
+		Self       LinkRef `json:"self,omitempty"`
+		Workspace  LinkRef `json:"workspace,omitempty"`
+		Credential LinkRef `json:"credential,omitempty"`
+	} `json:"_links,omitempty"`
+	ID               int    `json:"id,omitempty"`
+	Type             string `json:"type,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Description      string `json:"description,omitempty"`
+	Host             string `json:"host,omitempty"`
+	Port             int    `json:"port,omitempty"`
+	SSL              bool   `json:"ssl,omitempty"`
+	MicrosoftVersion string `json:"microsoftVersion,omitempty"`
+}
+
+type MicrosoftADPolicy struct {
+	Links *struct {
+		Self              LinkRef `json:"self,omitempty"`
+		Workspace         LinkRef `json:"workspace,omitempty"`
+		MicrosoftEndpoint LinkRef `json:"microsoftEndpoint,omitempty"`
+	} `json:"_links,omitempty"`
+	Name                   string   `json:"name,omitempty"`
+	ID                     int      `json:"id,omitempty"`
+	Description            string   `json:"description,omitempty"`
+	MicrosoftEndpointID    int      `json:"microsoftEndpointId,omitempty"`
+	MicrosoftEndpoint      string   `json:"microsoftEndpoint,omitempty"`
+	ComputerNameLetterCase string   `json:"computerNameLetterCase,omitempty"`
+	WorkspaceURL           string   `json:"workspace,omitempty"`
+	OU                     string   `json:"ou,omitempty"`
+	CreateOU               bool     `json:"createOrganizationalUnit,omitempty"`
+	RemoveOU               bool     `json:"removeOrganizationalUnit,omitempty"`
+	SecurityGroups         []string `json:"securityGroups,omitempty"`
+}
+
+type MicrosoftADComputerAccount struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID           int    `json:"id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	PolicyID     int    `json:"policyId,omitempty"`
+	Policy       string `json:"policy,omitempty"`
+	WorkspaceURL string `json:"workspace,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -49,121 +119,542 @@ func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	}
 }
 
-func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, workspaceID string,
-	templateProperties map[string]interface{}) (result *CustomName, err error) {
+func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, workspaceID string, templateProperties map[string]interface{}) (*CustomName, error) {
+	log.Println("onefuse.apiClient: GenerateCustomName")
 
 	config := apiClient.config
 	url := collectionURL(config, NamingResourceType)
-	log.Println("reserving custom name from " + url)
 
 	if templateProperties == nil {
 		templateProperties = make(map[string]interface{})
 	}
+
 	if workspaceID == "" {
-		workspaceID, err = findDefaultWorkspaceID(config)
+		defaultWorkspaceID, err := findDefaultWorkspaceID(config)
 		if err != nil {
-			return
+			return nil, err
 		}
+		workspaceID = defaultWorkspaceID
 	}
 
 	postBody := map[string]interface{}{
-		"namingPolicy":       fmt.Sprintf("%s%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
+		"namingPolicy":       fmt.Sprintf("/%s/%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
 		"templateProperties": templateProperties,
-		"workspace":          fmt.Sprintf("%s%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
+		"workspace":          fmt.Sprintf("/%s/%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
 	}
-	var jsonBytes []byte
-	jsonBytes, err = json.Marshal(postBody)
-	requestBody := string(jsonBytes)
+
+	jsonBytes, err := json.Marshal(postBody)
 	if err != nil {
-		err = errors.New("unable to marshal request body to JSON")
-		return
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Unable to marshal request body to JSON")
 	}
+
+	requestBody := string(jsonBytes)
+
 	payload := strings.NewReader(requestBody)
 
-	log.Println("CONFIG:")
-	log.Println(config)
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
-		return
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
 	}
-	log.Println("HTTP PAYLOAD to " + url + ":")
-	log.Println(postBody)
 
 	setHeaders(req, config)
 
 	client := getHttpClient(config)
-	var res *http.Response
-	res, err = client.Do(req)
+
+	res, err := client.Do(req)
 	if err != nil {
-		return
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
 	}
 
 	body, err := readResponse(res)
 	if err != nil {
-		return
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from %s %s", url, requestBody))
 	}
-	log.Println("HTTP POST RESULTS:")
-	log.Println(string(body))
-	json.Unmarshal(body, &result)
-	res.Body.Close()
+	defer res.Body.Close()
 
-	if result == nil {
-		err = errors.New("invalid response " + strconv.Itoa(res.StatusCode) + " while generating a custom name: " + string(body))
-		return
+	customName := CustomName{}
+	if err = json.Unmarshal(body, &customName); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
 	}
 
-	log.Println("custom name reserved: " +
-		"custom_name_id=" + strconv.Itoa(result.Id) +
-		" name=" + result.Name +
-		" dnsSuffix=" + result.DnsSuffix)
-	return
+	return &customName, nil
 }
 
-func (apiClient *OneFuseAPIClient) GetCustomName(id int) (result CustomName, err error) {
+func (apiClient *OneFuseAPIClient) GetCustomName(id int) (*CustomName, error) {
+	log.Println("onefuse.apiClient: GetCustomName")
+
 	config := apiClient.config
+
 	url := itemURL(config, NamingResourceType, id)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
 	}
 
 	setHeaders(req, config)
 
-	log.Println("REQUEST:")
-	log.Println(req)
-	client := getHttpClient(config)
-	res, _ := client.Do(req)
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-	log.Println("HTTP GET RESULTS:")
-	log.Println(string(body))
-
-	json.Unmarshal(body, &result)
-	res.Body.Close()
-	return
-}
-
-func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
-	config := apiClient.config
-	url := itemURL(config, NamingResourceType, id)
-	req, _ := http.NewRequest("DELETE", url, nil)
-	setHeaders(req, config)
 	client := getHttpClient(config)
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
 	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	customName := CustomName{}
+	if err = json.Unmarshal(body, &customName); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &customName, nil
+}
+
+func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
+	log.Println("onefuse.apiClient: DeleteCustomName")
+
+	config := apiClient.config
+
+	url := itemURL(config, NamingResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
+	return checkForErrors(res)
+}
+
+func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (*MicrosoftEndpoint, error) {
+	log.Println("onefuse.apiClient: CreateMicrosoftEndpoint")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (*MicrosoftEndpoint, error) {
+	log.Println("onefuse.apiClient: GetMicrosoftEndpoint")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (*MicrosoftEndpoint, error) {
+	log.Println("onefuse.apiClient: GetMicrosoftEndpointByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s;type:microsoft", collectionURL(config, ModuleEndpointResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	endpoints := EndpointsListResponse{}
+	err = json.Unmarshal(body, &endpoints)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(endpoints.Embedded.Endpoints) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find Microsoft Endpoint '%s'!", name))
+	}
+
+	endpoint := endpoints.Embedded.Endpoints[0]
+
+	return &endpoint, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (*MicrosoftEndpoint, error) {
+	log.Println("onefuse.apiClient: UpdateMicrosoftEndpoint")
+
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftEndpoint(id int) error {
+	log.Println("onefuse.apiClient: DeleteMicrosoftEndpoint")
+
+	return errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftADPolicy) (*MicrosoftADPolicy, error) {
+	log.Println("onefuse.apiClient: CreateMicrosoftADPolicy")
+
+	config := apiClient.config
+
+	// Default workspace if it was not provided
+	if newPolicy.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		newPolicy.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/microsoftADPolicies/
+	url := collectionURL(config, MicrosoftADPolicyResourceType)
+
+	jsonBytes, err := json.Marshal(newPolicy)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	// Create the create request
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	policy := MicrosoftADPolicy{}
+	if err = json.Unmarshal(body, &policy); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &policy, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftADPolicy(id int) (*MicrosoftADPolicy, error) {
+	log.Println("onefuse.apiClient: GetMicrosoftADPolicy")
+
+	config := apiClient.config
+
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	err = checkForErrors(res)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	policy := MicrosoftADPolicy{}
+	if err = json.Unmarshal(body, &policy); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &policy, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy *MicrosoftADPolicy) (*MicrosoftADPolicy, error) {
+	log.Println("onefuse.apiClient: UpdateMicrosoftADPolicy")
+
+	config := apiClient.config
+
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
+
+	if updatedPolicy.Name == "" {
+		return nil, errors.New("onefuse.apiClient: Microsoft AD Policy Updates Require a Name")
+	}
+
+	if updatedPolicy.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		updatedPolicy.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	jsonBytes, err := json.Marshal(updatedPolicy)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	req, err := http.NewRequest("PUT", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request PUT %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request PUT %s %s", url, requestBody))
+	}
+
+	err = checkForErrors(res)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request PUT %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from PUT %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	policy := MicrosoftADPolicy{}
+	if err = json.Unmarshal(body, &policy); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarhsal response %s", string(body)))
+	}
+
+	return &policy, nil
+}
+
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftADPolicy(id int) error {
+	log.Println("onefuse.apiClient: DeleteMicrosoftADPolicy")
+
+	config := apiClient.config
+
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
+	return checkForErrors(res)
+}
+
+func (apiClient *OneFuseAPIClient) CreateMicrosoftADComputerAccount(newComputerAccount *MicrosoftADComputerAccount) (*MicrosoftADComputerAccount, error) {
+	log.Println("onefuse.apiClient: CreateMicrosoftADComputerAccount")
+
+	config := apiClient.config
+
+	// Default workspace if it was not provided
+	if newComputerAccount.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		newComputerAccount.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	if newComputerAccount.Policy == "" {
+		if newComputerAccount.PolicyID != 0 {
+			newComputerAccount.Policy = itemURL(config, WorkspaceResourceType, newComputerAccount.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: Microsoft AD Computer Account Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: Microsoft AD Computer Account Create requires a PolicyID or Policy URL")
+	}
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/microsoftADComputerAccounts/
+	url := collectionURL(config, MicrosoftADComputerAccountResourceType)
+
+	jsonBytes, err := json.Marshal(newComputerAccount)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	// Create the create request
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	// Make the create request
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	computerAccount := MicrosoftADComputerAccount{}
+	if err = json.Unmarshal(body, &computerAccount); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &computerAccount, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftADComputerAccount(id int) (*MicrosoftADComputerAccount, error) {
+	log.Println("onefuse.apiClient: GetMicrosoftADComputerAccount")
+
+	config := apiClient.config
+
+	url := itemURL(config, MicrosoftADComputerAccountResourceType, id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
+	}
+	defer res.Body.Close()
+
+	computerAccount := MicrosoftADComputerAccount{}
+	if err = json.Unmarshal(body, &computerAccount); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &computerAccount, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftADComputerAccount(id int, updatedComputerAccount *MicrosoftADComputerAccount) (*MicrosoftADComputerAccount, error) {
+	log.Println("onefuse.apiClient: UpdateMicrosoftADComputerAccount")
+
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftADComputerAccount(id int) error {
+	log.Println("onefuse.apiClient: DeleteMicrosoftADComputerAccount")
+
+	config := apiClient.config
+
+	url := itemURL(config, MicrosoftADComputerAccountResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
 	return checkForErrors(res)
 }
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
+	fmt.Println("onefuse.findDefaultWorkspaceID")
+
 	filter := "filter=name.exact:Default"
 	url := fmt.Sprintf("%s?%s", collectionURL(config, WorkspaceResourceType), filter)
+
 	req, clientErr := http.NewRequest("GET", url, nil)
 	if clientErr != nil {
-		err = clientErr
+		err = errors.WithMessage(clientErr, fmt.Sprintf("onefuse.findDefaultWorkspaceID: Failed to make request GET %s", url))
 		return
 	}
 
@@ -172,7 +663,7 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	client := getHttpClient(config)
 	res, clientErr := client.Do(req)
 	if clientErr != nil {
-		err = clientErr
+		err = errors.WithMessage(clientErr, fmt.Sprintf("onefuse.findDefaultWorkspaceID: Failed to do request GET %s", url))
 		return
 	}
 
@@ -180,14 +671,15 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	if err != nil {
 		return
 	}
+	defer res.Body.Close()
 
 	var data WorkspacesListResponse
 	json.Unmarshal(body, &data)
-	res.Body.Close()
 
 	workspaces := data.Embedded.Workspaces
 	if len(workspaces) == 0 {
-		panic("Unable to find default workspace.")
+		err = errors.WithMessage(clientErr, "onefuse.findDefaultWorkspaceID: Failed to find default workspace!")
+		return
 	}
 	workspaceID = strconv.Itoa(workspaces[0].ID)
 	return
@@ -211,8 +703,19 @@ func readResponse(res *http.Response) (bytes []byte, err error) {
 }
 
 func checkForErrors(res *http.Response) error {
-	if res.StatusCode >= 400 {
-		b, _ := ioutil.ReadAll(res.Body)
+	if res.StatusCode >= 500 {
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		return errors.New(string(b))
+	} else if res.StatusCode >= 400 {
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
 		return errors.New(string(b))
 	}
 	return nil
@@ -229,20 +732,19 @@ func setStandardHeaders(req *http.Request) {
 
 func setHeaders(req *http.Request, config *Config) {
 	setStandardHeaders(req)
-	req.Header.Add("Host", config.address+":"+config.port)
+	req.Header.Add("Host", fmt.Sprintf("%s:%s", config.address, config.port))
 	req.Header.Add("SOURCE", "Terraform")
 	req.SetBasicAuth(config.user, config.password)
 }
 
 func collectionURL(config *Config, resourceType string) string {
-	address := config.address
-	port := config.port
-	return config.scheme + "://" + address + ":" + port + ApiVersion + ApiNamespace + "/" + resourceType + "/"
+	baseURL := fmt.Sprintf("%s://%s:%s", config.scheme, config.address, config.port)
+	endpoint := path.Join(ApiVersion, ApiNamespace, resourceType)
+	return fmt.Sprintf("%s/%s/", baseURL, endpoint)
 }
 
 func itemURL(config *Config, resourceType string, id int) string {
-	address := config.address
-	port := config.port
 	idString := strconv.Itoa(id)
-	return config.scheme + "://" + address + ":" + port + ApiVersion + ApiNamespace + "/" + resourceType + "/" + idString + "/"
+	baseURL := collectionURL(config, resourceType)
+	return fmt.Sprintf("%s%s/", baseURL, idString)
 }
