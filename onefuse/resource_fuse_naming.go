@@ -54,22 +54,8 @@ func resourceCustomNaming() *schema.Resource {
 	}
 }
 
-func resourceCustomNameCreate(d *schema.ResourceData, m interface{}) error {
-	log.Println("calling resourceCustomNameCreate")
-
-	config := m.(Config)
-	namingPolicyID := d.Get("naming_policy_id").(string)
-	workspaceID := d.Get("workspace_id").(string)
-	templateProperties := d.Get("template_properties").(map[string]interface{})
-	cn, err := config.NewOneFuseApiClient().GenerateCustomName(namingPolicyID, workspaceID, templateProperties)
-	if err != nil {
-		return err
-	}
-	err = bindResource(d, *cn)
-	return err
-}
-
-func bindResource(d *schema.ResourceData, cn CustomName) error {
+func bindCustomNamingResource(d *schema.ResourceData, cn *CustomName) error {
+	log.Println("onefuse.bindCustomNamingResource")
 
 	// setting the ID is REALLY necessary here
 	// we use the FQDN instead of the numeric ID as it is more likely to remain consistent as a composite key in TF
@@ -87,20 +73,49 @@ func bindResource(d *schema.ResourceData, cn CustomName) error {
 	return nil
 }
 
-func resourceCustomNameRead(d *schema.ResourceData, m interface{}) error {
+func resourceCustomNameCreate(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceCustomNameCreate")
+
 	config := m.(Config)
+
+	namingPolicyID := d.Get("naming_policy_id").(string)
+	workspaceID := d.Get("workspace_id").(string)
+	templateProperties := d.Get("template_properties").(map[string]interface{})
+
+	cn, err := config.NewOneFuseApiClient().GenerateCustomName(namingPolicyID, workspaceID, templateProperties)
+	if err != nil {
+		return err
+	}
+
+	return bindCustomNamingResource(d, cn)
+}
+
+func resourceCustomNameRead(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceCustomNameRead")
+
+	config := m.(Config)
+
 	id := d.Get("custom_name_id").(int)
+
 	customName, err := config.NewOneFuseApiClient().GetCustomName(id)
-	bindResource(d, customName)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return bindCustomNamingResource(d, customName)
 }
 
 func resourceCustomNameUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceCustomNameUpdate")
 	return nil
 }
 
 func resourceCustomNameDelete(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceCustomNameDelete")
+
 	config := m.(Config)
+
 	id := d.Get("custom_name_id").(int)
+
 	return config.NewOneFuseApiClient().DeleteCustomName(id)
 }
