@@ -14,7 +14,7 @@ import (
 
 func TestGenerateCustomName(t *testing.T) {
 	config := GetConfig()
-	cn := config.NewFuseApiClient().GenerateCustomName("sovlabs.net", "2", "", nil)
+	cn := config.NewFuseApiClient().GenerateCustomName("2", "", nil)
 	log.Println(strconv.Itoa(cn.Id) + ": " + cn.Name + "." + cn.DnsSuffix + " version:" + strconv.Itoa(cn.Version))
 	if cn.Id <= 0 {
 		t.Errorf("customName.Id=%d; want > 0", cn.Id)

@@ -16,8 +16,7 @@ pipeline {
       node { label 'go' }
     }
     parameters {
-        string(name: 'version', defaultValue: 'X.Y.Z', description: 'IGNORED. Version is set in the VERSION file of the repository.')
-        string(name: 'bucket', defaultValue: 'cb-internal-builds', description: 'Bucket for uploading release artifacts.')
+        string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
         string(name: 'release_date', defaultValue: 'YYYY-MM-DD', description: 'Release date of artifact.')
     }
@@ -26,6 +25,7 @@ pipeline {
           script: "cat VERSION",
           returnStdout: true,
       ).trim()
+      TAG = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
       OUTPUT_BASEDIR = "release"
       OUTPUT_DIR = "${env.OUTPUT_BASEDIR}/terraform-provider-onefuse"
       TERRAFORM_PROVIDER_BIN_NAME = "terraform-provider-onefuse_v${env.VERSION}"
@@ -78,7 +78,7 @@ pipeline {
         stage("Upload release artifacts to S3") {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS Jenkins User', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${bucket_root_path}${env.VERSION} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
+                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.TAG} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
                 }
             }
         }
