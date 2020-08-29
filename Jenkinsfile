@@ -1,22 +1,9 @@
-/*
-    A pipeline to build the OneFuse Terraform Provider
-
-    TODO:
-    * 
-
-    Jenkins Prerequisites:
-    * 
-
-    Agent Prerequisites:
-    * Agent built with the go toolchain
-    * Agent containing label 'go'
-*/
 pipeline {
     agent {
       node { label 'go' }
     }
     parameters {
-        string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
+        string(name: 'bucket', defaultValue: "cb-internal-builds", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
     }
     environment {
@@ -24,11 +11,10 @@ pipeline {
           script: "cat VERSION",
           returnStdout: true,
       ).trim()
-      TAG = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
       OUTPUT_BASEDIR = "release"
       OUTPUT_DIR = "${env.OUTPUT_BASEDIR}/terraform-provider-onefuse"
       TERRAFORM_PROVIDER_BIN_NAME = "terraform-provider-onefuse_v${env.VERSION}"
-      DATE= sh(
+      DATE = sh(
 	  script: "date +\"%m-%d-%y\"",
 	  returnStdout: true,
       ).trim()
@@ -103,7 +89,27 @@ pipeline {
 			'type': 'section',
 			'text': [
 			    'type': 'mrkdwn',
-			    'text': "s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/${env.VMOAPP_NAME}"
+			    'text': "*Darwin* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/darwin/${env.TERRAFORM_PROVIDER_BIN_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "*Linux* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/linux/${env.TERRAFORM_PROVIDER_BIN_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "*Windows* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/windows/${env.TERRAFORM_PROVIDER_BIN_NAME}"
 			]
 		    ],
 		    [
@@ -122,13 +128,12 @@ pipeline {
 				'text': 'This is an internal only release candidate'
 			    ]
 			]
-			]
 		    ]
-        )
-	}
+		]
+	    )
 	}
     }
-    }
+}
     post {
         always {
             archiveArtifacts artifacts: "${env.OUTPUT_DIR}/linux/**"
@@ -137,5 +142,4 @@ pipeline {
             archiveArtifacts artifacts: "${env.OUTPUT_DIR}/info.json"
         }
     }
-
 }
