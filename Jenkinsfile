@@ -18,7 +18,6 @@ pipeline {
     parameters {
         string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
-        string(name: 'release_date', defaultValue: 'YYYY-MM-DD', description: 'Release date of artifact.')
     }
     environment {
       VERSION = sh(
@@ -29,6 +28,10 @@ pipeline {
       OUTPUT_BASEDIR = "release"
       OUTPUT_DIR = "${env.OUTPUT_BASEDIR}/terraform-provider-onefuse"
       TERRAFORM_PROVIDER_BIN_NAME = "terraform-provider-onefuse_v${env.VERSION}"
+      DATE= sh(
+	  script: "date +\"%m-%d-%y\"",
+	  returnStdout: true,
+      ).trim()
     }
     stages {
         stage('Build') {
@@ -68,7 +71,7 @@ pipeline {
                     writeFile(
                         file: "${env.OUTPUT_DIR}/info.json",
                         text: sh(
-                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${params.release_date} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
+                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${env.DATE} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
                             returnStdout: true,
                         ).trim(),
                     )
