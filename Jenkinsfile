@@ -81,10 +81,53 @@ pipeline {
         stage("Upload release artifacts to S3") {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS Jenkins User', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.TAG} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
+                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.VERSION} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
                 }
             }
         }
+	stage('Send slack message') {
+	    steps {
+		slackSend(
+		    channel: '#automation-testing-ground',
+		    color: 'good',
+		    blocks:[
+		    [
+			'type': 'header',
+			'text': [
+			    'type': 'plain_text',
+			    'text': "OneFuse-Terraform-Provider ${GIT_BRANCH}-${BUILD_NUMBER} is here :meow_party:",
+			    'emoji': true
+			]
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/${env.VMOAPP_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'context',
+			'elements': [
+			    [
+				'type': 'image',
+				'image_url': 'https://pbs.twimg.com/profile_images/625633822235693056/lNGUneLX_400x400.jpg',
+				'alt_text': 'cute cat'
+			    ],
+			    [
+				'type': 'mrkdwn',
+				'text': 'This is an internal only release candidate'
+			    ]
+			]
+			]
+		    ]
+        )
+	}
+	}
+    }
     }
     post {
         always {
