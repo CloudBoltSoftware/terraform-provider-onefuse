@@ -1,34 +1,23 @@
-/*
-    A pipeline to build the OneFuse Terraform Provider
-
-    TODO:
-    * 
-
-    Jenkins Prerequisites:
-    * 
-
-    Agent Prerequisites:
-    * Agent built with the go toolchain
-    * Agent containing label 'go'
-*/
 pipeline {
     agent {
       node { label 'go' }
     }
     parameters {
-        string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
+        string(name: 'bucket', defaultValue: "cb-internal-builds", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
-        string(name: 'release_date', defaultValue: 'YYYY-MM-DD', description: 'Release date of artifact.')
     }
     environment {
       VERSION = sh(
           script: "cat VERSION",
           returnStdout: true,
       ).trim()
-      TAG = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
       OUTPUT_BASEDIR = "release"
       OUTPUT_DIR = "${env.OUTPUT_BASEDIR}/terraform-provider-onefuse"
       TERRAFORM_PROVIDER_BIN_NAME = "terraform-provider-onefuse_v${env.VERSION}"
+      DATE = sh(
+	  script: "date +\"%m-%d-%y\"",
+	  returnStdout: true,
+      ).trim()
     }
     stages {
         stage('Build') {
@@ -68,7 +57,7 @@ pipeline {
                     writeFile(
                         file: "${env.OUTPUT_DIR}/info.json",
                         text: sh(
-                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${params.release_date} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
+                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${env.DATE} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
                             returnStdout: true,
                         ).trim(),
                     )
@@ -78,11 +67,73 @@ pipeline {
         stage("Upload release artifacts to S3") {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS Jenkins User', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.TAG} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
+                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.VERSION} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
                 }
             }
         }
+	stage('Send slack message') {
+	    steps {
+		slackSend(
+		    channel: '#automation-testing-ground',
+		    color: 'good',
+		    blocks:[
+		    [
+			'type': 'header',
+			'text': [
+			    'type': 'plain_text',
+			    'text': "OneFuse-Terraform-Provider ${GIT_BRANCH}-${BUILD_NUMBER} is here :meow_party:",
+			    'emoji': true
+			]
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "*Darwin* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/darwin/${env.TERRAFORM_PROVIDER_BIN_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "*Linux* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/linux/${env.TERRAFORM_PROVIDER_BIN_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'section',
+			'text': [
+			    'type': 'mrkdwn',
+			    'text': "*Windows* s3://${params.bucket}${params.bucket_root_path}${env.VERSION}/windows/${env.TERRAFORM_PROVIDER_BIN_NAME}"
+			]
+		    ],
+		    [
+			'type': 'divider'
+		    ],
+		    [
+			'type': 'context',
+			'elements': [
+			    [
+				'type': 'image',
+				'image_url': 'https://pbs.twimg.com/profile_images/625633822235693056/lNGUneLX_400x400.jpg',
+				'alt_text': 'cute cat'
+			    ],
+			    [
+				'type': 'mrkdwn',
+				'text': 'This is an internal only release candidate'
+			    ]
+			]
+		    ]
+		]
+	    )
+	}
     }
+}
     post {
         always {
             archiveArtifacts artifacts: "${env.OUTPUT_DIR}/linux/**"
@@ -91,5 +142,4 @@ pipeline {
             archiveArtifacts artifacts: "${env.OUTPUT_DIR}/info.json"
         }
     }
-
 }
