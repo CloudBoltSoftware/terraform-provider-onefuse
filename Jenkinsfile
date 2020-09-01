@@ -72,6 +72,7 @@ pipeline {
             }
         }
 	stage('Send slack message') {
+	    when { branch 'release/*' }
 	    steps {
 		slackSend(
 		    channel: '#automation-testing-ground',
