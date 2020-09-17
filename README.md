@@ -1,6 +1,6 @@
 # Terraform Provider for OneFuse
 
-Terraform Provider for integrating with [SovLabs OneFuse](https://www.sovlabs.com/products/onefuse).
+Terraform Provider for integrating with [OneFuse](https://www.sovlabs.com/products/onefuse).
 
 ## Requirements
 
@@ -42,9 +42,9 @@ _You may want to use Make 4.3+ to ensure all make features work._
 
 ### Sample Terraform Configuration
 
-To get started with the Terraform Provider for SovLabs OneFuse, put the following into a file called `main.tf`.
+To get started with the Terraform Provider for OneFuse, put the following into a file called `main.tf`.
 
-Fill in the `provider "onefuse"` section with details about your SovLabs OneFuse instance.
+Fill in the `provider "onefuse"` section with details about your OneFuse instance.
 
 ```hcl
 provider "onefuse" {
@@ -58,18 +58,29 @@ provider "onefuse" {
 
 resource "onefuse_naming" "my-onefuse-name" {
   naming_policy_id        = "2"
-  dns_suffix              = "sovlabs.net"
+  dns_suffix              = "company.com"
   workspace_id            = "6"
   template_properties     = {
       "ownerName"               = "jsmith@company.com"
       "Environment"             = "dev"
       "OS"                      = "Linux"
       "Application"             = "Web Servers"
-      "suffix"                  = "sovlabs.net"
+      "suffix"                  = "company.com"
       "tenant"                  =  "mytenant"
   }
 }
 ```
+## Releases
+> To learn more, please visit our [docs](https://docs.cloudbolt.io/articles/onefuse-upstream-platforms-latest/hashicorp-terraform)
+### v1.1
+###### October 14, 2020
+- OneFuse DNS module support
+- OneFuse IPAM module support
+- OneFuse Microsoft Active Directory module support
+
+### v1.0
+###### July 15, 2020
+- OneFuse Naming module support
 
 ## Contributing
 
