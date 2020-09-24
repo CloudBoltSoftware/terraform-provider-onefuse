@@ -58,6 +58,7 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
+
 		},
 		ConfigureFunc: configureProvider,
 	}

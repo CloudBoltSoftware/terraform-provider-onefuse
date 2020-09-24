@@ -7,12 +7,12 @@ variable "onefuse_scheme" {
 
 variable "onefuse_address" {
   type = string
-  default = "localhost"
+  default = "se-onefuse-dev.sovlabs.net"
 }
 
 variable "onefuse_port" {
   type = string
-  default = "443"
+  default = "8080"
 }
 
 variable "onefuse_user" {
@@ -30,58 +30,31 @@ variable "onefuse_verify_ssl" {
   default = false
 }
 
-// Microsoft AD Endpoint
-
-variable "onefuse_microsoft_endpoint" {
+variable "onefuse_naming_policy_id" {
   type = string
-  default = "myMSEndpoint"
+  default = "1"
 }
 
-// Microsoft AD Policy
-
-variable "ad_policy_name" {
+variable "onefuse_ad_policy_id" {
   type = string
-  default = "myADPolicy01"
+  default = "1"
 }
 
-variable "ad_policy_description" {
-  type = string
-  default = "Created with Terraform"
-}
-
-variable "ad_computer_name_letter_case" {
-  type = string
-  default = "Lowercase"
-}
-
-variable "ad_ou" {
-  type = string
-  default = "OU=Accounting,DC=yourOrg,DC=com"
-}
-
-variable "ad_workspace_url" {
+variable "workspace_url" {
   type = string
   default = "" // Default
 }
 
-variable "ad_security_groups" {
-  type = list(string)
-  default = ["CN=SomeSecurityGroup,OU=Accounting,DC=yourOrg,DC=com"]
-  
-}
 
-variable "ad_create_ou" {
-  type = bool
-  default = true
-}
-
-variable "ad_remove_ou" {
-  type = bool
-  default = true
-}
-
-// Microsoft AD Object
-variable "ad_computer_account_name" {
-  type = string
-  default = "someComputerName"
+variable "onefuse_template_properties" {
+  type = map
+  default = {
+      "nameEnv"               = "prod"
+      "nameOs"                = "w"
+      "nameDatacenter"        = "por"
+      "nameApp"               = "web"
+      "nameDomain"            = "sovlabs.net"
+      "nameLocation"          = "atl"
+      "testOU"	              = "build"
+  }
 }

@@ -113,6 +113,22 @@ type MicrosoftADComputerAccount struct {
 	WorkspaceURL string `json:"workspace,omitempty"`
 }
 
+type DNSReservation struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID           		int    `json:"id,omitempty"`
+	Name         		string `json:"name,omitempty"`
+	PolicyID   			int    `json:"policyId,omitempty"`
+	Policy      		string `json:"policy,omitempty"`
+	WorkspaceURL 		string `json:"workspace,omitempty"`
+	Records		 		string `json:"records,omitempty"`
+	TemplateProperties  string `json:"templateProperties,omitempty"`
+}
+
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	return &OneFuseAPIClient{
 		config: c,
