@@ -27,6 +27,7 @@ const WorkspaceResourceType = "workspaces"
 const MicrosoftADPolicyResourceType = "microsoftADPolicies"
 const MicrosoftADComputerAccountResourceType = "microsoftADComputerAccounts"
 const ModuleEndpointResourceType = "endpoints"
+const DNSReservationResourceType = "dnsReservations"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -120,13 +121,14 @@ type DNSReservation struct {
 		Policy      LinkRef `json:"policy,omitempty"`
 		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
 	} `json:"_links,omitempty"`
-	ID           		int    `json:"id,omitempty"`
-	Name         		string `json:"name,omitempty"`
-	PolicyID   			int    `json:"policyId,omitempty"`
-	Policy      		string `json:"policy,omitempty"`
-	WorkspaceURL 		string `json:"workspace,omitempty"`
-	Records		 		string `json:"records,omitempty"`
-	TemplateProperties  string `json:"templateProperties,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	Name               string                 `json:"name,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	Value              string                 `json:"value,omitempty"`
+	Zones              []string               `json:"zones,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -644,6 +646,158 @@ func (apiClient *OneFuseAPIClient) DeleteMicrosoftADComputerAccount(id int) erro
 	config := apiClient.config
 
 	url := itemURL(config, MicrosoftADComputerAccountResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
+	return checkForErrors(res)
+}
+
+//DNS Functions
+
+//Create DNS Reservation
+
+func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReservation) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: CreateDNSReservation")
+
+	config := apiClient.config
+
+	// Default workspace if it was not provided
+	if newDNSRecord.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		newDNSRecord.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	if newDNSRecord.Policy == "" {
+		if newDNSRecord.PolicyID != 0 {
+			newDNSRecord.Policy = itemURL(config, WorkspaceResourceType, newDNSRecord.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: DNS Record Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: DNS Record Create requires a PolicyID or Policy URL")
+	}
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/dnsReservations/
+	url := collectionURL(config, DNSReservationResourceType)
+
+	jsonBytes, err := json.Marshal(newDNSRecord)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	// Create the create request
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	// Make the create request
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	dnsRecord := DNSReservation{}
+	if err = json.Unmarshal(body, &dnsRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &dnsRecord, nil
+}
+
+//Get DNS Reservation
+
+func (apiClient *OneFuseAPIClient) GetDNSReservation(id int) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: GetDNSReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, DNSReservationResourceType, id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
+	}
+	defer res.Body.Close()
+
+	dnsRecord := DNSReservation{}
+	if err = json.Unmarshal(body, &dnsRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &dnsRecord, err
+}
+
+//Update DNS Record
+
+func (apiClient *OneFuseAPIClient) UpdateDNSReservation(id int, updatedDNSReservation *DNSReservation) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: UpdateDNSReservation")
+
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteDNSReservation(id int) error {
+	log.Println("onefuse.apiClient: DeleteDNSReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, DNSReservationResourceType, id)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {

@@ -55,10 +55,10 @@ func Provider() *schema.Provider {
 			"onefuse_naming":                        resourceCustomNaming(),
 			"onefuse_microsoft_ad_policy":           resourceMicrosoftADPolicy(),
 			"onefuse_microsoft_ad_computer_account": resourceMicrosoftADComputerAccount(),
+			"onefuse_dns_record":                    resourceDNSReservation(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
-
 		},
 		ConfigureFunc: configureProvider,
 	}

@@ -40,11 +40,14 @@ func resourceDNSReservation() *schema.Resource {
 				Required: true,
 			},
 			"zones": {
-				Type:     schema.TypeString,
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 				Required: true,
-			}
+			},
 			"template_properties": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeMap,
 				Optional: true,
 			},
 		},
@@ -75,15 +78,20 @@ func bindDNSReservationResource(d *schema.ResourceData, dnsRecord *DNSReservatio
 func resourceDNSReservationCreate(d *schema.ResourceData, m interface{}) error {
 	log.Println("onefuse.resourceDNSReservationCreate")
 
+	var dnsZones []string
+	for _, group := range d.Get("zones").([]interface{}) {
+		dnsZones = append(dnsZones, group.(string))
+	}
+
 	config := m.(Config)
 
 	newDNSRecord := DNSReservation{
-		Name:         		d.Get("name").(string),
-		PolicyID:     		d.Get("policy_id").(int),
-		WorkspaceURL: 		d.Get("workspace_url").(string),
-		Value: 	  	    	d.Get("value").(string),
-		Zones: 	  	    	d.Get("zones").(string),
-		TemplateProperties: d.Get("template_properties").(string),
+		Name:               d.Get("name").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		Value:              d.Get("value").(string),
+		Zones:              dnsZones,
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	dnsRecord, err := config.NewOneFuseApiClient().CreateDNSReservation(&newDNSRecord)
@@ -121,12 +129,17 @@ func resourceDNSReservationUpdate(d *schema.ResourceData, m interface{}) error {
 	changed := (d.HasChange("name") ||
 		d.HasChange("policy_id") ||
 		d.HasChange("workspace_url")) ||
-		d.HasChange("value")) ||
-		d.HasChange("zones") ||		
-		d.HasChange("template_properties") 
+		d.HasChange("value") ||
+		d.HasChange("zones") ||
+		d.HasChange("template_properties")
 
 	if !changed {
 		return nil
+	}
+
+	var dnsZones []string
+	for _, group := range d.Get("zones").([]interface{}) {
+		dnsZones = append(dnsZones, group.(string))
 	}
 
 	// Make the API call to update the computer account
@@ -135,12 +148,12 @@ func resourceDNSReservationUpdate(d *schema.ResourceData, m interface{}) error {
 	// Create the desired AD Computer Account object
 	id := d.Id()
 	desiredDNSRecord := DNSReservation{
-		Name:         		d.Get("name").(string),
-		PolicyID:     		d.Get("policy_id").(int),
-		WorkspaceURL: 		d.Get("workspace_url").(string),
-		Value: 	  	    	d.Get("value").(string),
-		Zones: 	  	    	d.Get("zone").(string),	
-		TemplateProperties: d.Get("template_properties").(string),
+		Name:               d.Get("name").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		Value:              d.Get("value").(string),
+		Zones:              dnsZones,
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	intID, err := strconv.Atoi(id)

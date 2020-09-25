@@ -40,6 +40,21 @@ variable "onefuse_ad_policy_id" {
   default = "1"
 }
 
+variable "onefuse_dns_policy_id" {
+  type = string
+  default = "1"
+}
+
+variable "onefuse_dns_zones" {
+  type = list
+  default = ["sovlabs.net"]
+}
+
+variable "onefuse_dns_ip" {
+  type = string
+  default = "10.30.6.221"
+}
+
 variable "workspace_url" {
   type = string
   default = "" // Default
