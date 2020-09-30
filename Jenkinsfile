@@ -75,7 +75,7 @@ pipeline {
 	    when { branch 'release/*' }
 	    steps {
 		slackSend(
-		    channel: '#automation-testing-ground',
+		    channel: '#dev-release',
 		    color: 'good',
 		    blocks:[
 		    [
