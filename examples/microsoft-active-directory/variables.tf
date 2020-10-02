@@ -37,7 +37,7 @@ variable "onefuse_naming_policy_id" {
 
 variable "onefuse_ad_policy_id" {
   type = string
-  default = "1"
+  default = "2"
 }
 
 variable "onefuse_dns_policy_id" {
@@ -64,12 +64,12 @@ variable "workspace_url" {
 variable "onefuse_template_properties" {
   type = map
   default = {
-      "nameEnv"               = "prod"
+      "nameEnv"               = "dev"
       "nameOs"                = "w"
       "nameDatacenter"        = "por"
       "nameApp"               = "web"
       "nameDomain"            = "sovlabs.net"
       "nameLocation"          = "atl"
-      "testOU"	              = "build"
+      "testOU"	              = "sidtest"
   }
 }

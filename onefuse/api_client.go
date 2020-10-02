@@ -107,11 +107,12 @@ type MicrosoftADComputerAccount struct {
 		Policy      LinkRef `json:"policy,omitempty"`
 		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
 	} `json:"_links,omitempty"`
-	ID           int    `json:"id,omitempty"`
-	Name         string `json:"name,omitempty"`
-	PolicyID     int    `json:"policyId,omitempty"`
-	Policy       string `json:"policy,omitempty"`
-	WorkspaceURL string `json:"workspace,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	Name               string                 `json:"name,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
 }
 
 type DNSReservation struct {
@@ -128,7 +129,7 @@ type DNSReservation struct {
 	WorkspaceURL       string                 `json:"workspace,omitempty"`
 	Value              string                 `json:"value,omitempty"`
 	Zones              []string               `json:"zones,omitempty"`
-	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -156,7 +157,7 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, wor
 	}
 
 	postBody := map[string]interface{}{
-		"namingPolicy":       fmt.Sprintf("/%s/%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
+		"policy":             fmt.Sprintf("/%s/%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
 		"templateProperties": templateProperties,
 		"workspace":          fmt.Sprintf("/%s/%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
 	}

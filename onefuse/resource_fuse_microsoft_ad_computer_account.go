@@ -47,6 +47,10 @@ func resourceMicrosoftADComputerAccount() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"template_properties": {
+				Type:     schema.TypeMap,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -78,9 +82,10 @@ func resourceMicrosoftADComputerAccountCreate(d *schema.ResourceData, m interfac
 	config := m.(Config)
 
 	newComputerAccount := MicrosoftADComputerAccount{
-		Name:         d.Get("name").(string),
-		PolicyID:     d.Get("policy_id").(int),
-		WorkspaceURL: d.Get("workspace_url").(string),
+		Name:               d.Get("name").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	computerAccount, err := config.NewOneFuseApiClient().CreateMicrosoftADComputerAccount(&newComputerAccount)
@@ -129,9 +134,10 @@ func resourceMicrosoftADComputerAccountUpdate(d *schema.ResourceData, m interfac
 	// Create the desired AD Computer Account object
 	id := d.Id()
 	desiredComputerAccount := MicrosoftADComputerAccount{
-		Name:         d.Get("name").(string),
-		PolicyID:     d.Get("policy_id").(int),
-		WorkspaceURL: d.Get("workspace_url").(string),
+		Name:               d.Get("name").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	intID, err := strconv.Atoi(id)
