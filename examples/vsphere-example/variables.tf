@@ -55,6 +55,11 @@ variable "onefuse_dns_ip" {
   default = "10.30.6.221"
 }
 
+variable "onefuse_gateway" {
+  type = string
+  default = "10.30.29.1"
+}
+
 variable "workspace_url" {
   type = string
   default = "" // Default
@@ -76,4 +81,19 @@ variable "onefuse_template_properties" {
       "nameLocation"          = "atl"
       "testOU"	              = "sidtest"
   }
+}
+
+variable "vsphere_user" {
+        type = string
+        default = "vrasvc@sovlabs.net"
+}
+
+variable "vsphere_password" {
+        type = string
+        default = "VmwareS0v"
+}
+
+variable "vsphere_server" {
+        type  = string
+        default = "vcenter01.sovlabs.net"
 }

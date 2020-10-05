@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 			"onefuse_microsoft_ad_policy":           resourceMicrosoftADPolicy(),
 			"onefuse_microsoft_ad_computer_account": resourceMicrosoftADComputerAccount(),
 			"onefuse_dns_record":                    resourceDNSReservation(),
+			"onefuse_ipam_record":                   resourceIPAMReservation(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
