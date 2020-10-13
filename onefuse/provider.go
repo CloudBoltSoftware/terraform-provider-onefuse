@@ -59,7 +59,8 @@ func Provider() *schema.Provider {
 			"onefuse_ipam_record":                   resourceIPAMReservation(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
+			"onefuse_microsoft_endpoint":  dataSourceMicrosoftEndpoint(),
+			"onefuse_static_property_set": dataSourceStaticPropertySet(),
 		},
 		ConfigureFunc: configureProvider,
 	}

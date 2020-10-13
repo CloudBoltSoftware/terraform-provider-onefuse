@@ -74,7 +74,7 @@ variable "onefuse_template_properties" {
   type = map
   default = {
       "nameEnv"               = "dev"
-      "nameOs"                = "w"
+      "nameOs"                = data.onefuse_static_property_set.linux.properties.os
       "nameDatacenter"        = "por"
       "nameApp"               = "web"
       "nameDomain"            = "sovlabs.net"

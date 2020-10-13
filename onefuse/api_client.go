@@ -29,6 +29,7 @@ const MicrosoftADComputerAccountResourceType = "microsoftADComputerAccounts"
 const ModuleEndpointResourceType = "endpoints"
 const DNSReservationResourceType = "dnsReservations"
 const IPAMReservationResourceType = "ipamReservations"
+const StaticPropertySetResourceType = "propertySets"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -110,6 +111,7 @@ type MicrosoftADComputerAccount struct {
 	} `json:"_links,omitempty"`
 	ID                 int                    `json:"id,omitempty"`
 	Name               string                 `json:"name,omitempty"`
+	FinalOU            string                 `json:"finalOu"`
 	PolicyID           int                    `json:"policyId,omitempty"`
 	Policy             string                 `json:"policy,omitempty"`
 	WorkspaceURL       string                 `json:"workspace,omitempty"`
@@ -151,8 +153,26 @@ type IPAMReservation struct {
 	SecondaryDNS       string                 `json:"secondaryDns"`
 	Network            string                 `json:"network,omitempty"`
 	DNSSuffix          string                 `json:"dnsSuffix,omitempty"`
-	DNSSearchSuffixes  []string               `json:"dnsSearchSuffixes,omitempty"`
+	Netmask            string                 `json:"netmask,omitempty"`
 	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
+}
+
+type StaticPropertySetResponse struct {
+	Embedded struct {
+		PropertySets []StaticPropertySet `json:"propertySets"`
+	} `json:"_embedded"`
+}
+
+type StaticPropertySet struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int                    `json:"id,omitempty"`
+	Type        string                 `json:"type,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Properties  map[string]interface{} `json:"properties,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -991,6 +1011,60 @@ func (apiClient *OneFuseAPIClient) DeleteIPAMReservation(id int) error {
 }
 
 // End IPAM
+
+// Start Static Property Set
+
+func (apiClient *OneFuseAPIClient) GetStaticPropertySet(id int) (*StaticPropertySet, error) {
+	log.Println("onefuse.apiClient: GetStaticPropertySet")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*StaticPropertySet, error) {
+	log.Println("onefuse.apiClient: GetStaticPropertySetByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s;type:static", collectionURL(config, StaticPropertySetResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	staticPropertySets := StaticPropertySetResponse{}
+	err = json.Unmarshal(body, &staticPropertySets)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(staticPropertySets.Embedded.PropertySets) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find staticPropertySet '%s'!", name))
+	}
+
+	staticPropertySet := staticPropertySets.Embedded.PropertySets[0]
+
+	return &staticPropertySet, err
+}
+
+// End Static Property Set
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")

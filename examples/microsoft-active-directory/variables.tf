@@ -42,12 +42,12 @@ variable "onefuse_ad_policy_id" {
 
 variable "onefuse_dns_policy_id" {
   type = string
-  default = "1"
+  default = "2"
 }
 
 variable "onefuse_dns_zones" {
   type = list
-  default = ["w2k19ad.sovlabs.net"]
+  default = ["infoblox851.sovlabs.net"]
 }
 
 variable "onefuse_dns_ip" {
@@ -69,11 +69,26 @@ variable "onefuse_template_properties" {
   type = map
   default = {
       "nameEnv"               = "dev"
-      "nameOs"                = "w"
+      "nameOs"                = "l"
       "nameDatacenter"        = "por"
       "nameApp"               = "web"
       "nameDomain"            = "sovlabs.net"
       "nameLocation"          = "atl"
       "testOU"	              = "sidtest"
   }
+}
+
+variable "vsphere_user" {
+        type = string
+        default = "vrasvc@sovlabs.net"
+}
+
+variable "vsphere_password" {
+        type = string
+        default = "VmwareS0v"
+}
+
+variable "vsphere_server" {
+        type  = string
+        default = "vcenter01.sovlabs.net"
 }
