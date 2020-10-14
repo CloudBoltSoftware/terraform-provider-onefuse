@@ -1,11 +1,4 @@
-provider "onefuse" {
-  scheme      = var.onefuse_scheme
-  address     = var.onefuse_address
-  port        = var.onefuse_port
-  user        = var.onefuse_user
-  password    = var.onefuse_password
-  verify_ssl  = var.onefuse_verify_ssl
-}
+
 
 data "onefuse_static_property_set" "linux" {
   name = "linux"
@@ -110,7 +103,7 @@ output "ad_ou" {
   value = onefuse_microsoft_ad_computer_account.dev.final_ou
 }
 
-output "hostname_1" {
+output "hostname_machine_2" {
   value = onefuse_naming.machine-name[1].name
 }
 

@@ -1,15 +1,15 @@
-// Start Static Property Set
+// Start DNS Policies
 
-func (apiClient *OneFuseAPIClient) GetStaticPropertySet(id int) (*StaticPropertySet, error) {
-	log.Println("onefuse.apiClient: GetStaticPropertySet")
+func (apiClient *OneFuseAPIClient) GetDNSPolicy(id int) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: DNSPolicy")
 	return nil, errors.New("onefuse.apiClient: Not implemented yet")
 }
 
-func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*StaticPropertySet, error) {
-	log.Println("onefuse.apiClient: GetStaticPropertySetByName")
+func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: GetDNSPolicyByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s;type:static", collectionURL(config, StaticPropertySetResourceType), name)
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, DNSPolicyResourceType), name)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -35,19 +35,19 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 	}
 	defer res.Body.Close()
 
-	staticPropertySets := StaticPropertySetResponse{}
-	err = json.Unmarshal(body, &staticPropertySets)
+	dnsPolicies := DNSPolicyResponse{}
+	err = json.Unmarshal(body, &dnsPolicies)
 	if err != nil {
 		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
 	}
 
-	if len(staticPropertySets.Embedded.staticPropertySets) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find staticPropertySet '%s'!", name))
+	if len(dnsPolicies.Embedded.DNSPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
 	}
 
-	staticPropertySet := staticPropertySets.Embedded.staticPropertySets[0]
+	dnsPolicy := dnsPolicies.Embedded.DNSPolicies[0]
 
-	return &staticPropertySet, err
+	return &dnsPolicy, err
 }
 
-// End Static Property Set
+// End DNS Policies
