@@ -30,6 +30,10 @@ const ModuleEndpointResourceType = "endpoints"
 const DNSReservationResourceType = "dnsReservations"
 const IPAMReservationResourceType = "ipamReservations"
 const StaticPropertySetResourceType = "propertySets"
+const IPAMPolicyResourceType = "ipamPolicies"
+const NamingPolicyResourceType = "namingPolicies"
+const ADPolicyResourceType = "microsoftADPolicies"
+const DNSPolicyResourceType = "dnsPolicies"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -173,6 +177,70 @@ type StaticPropertySet struct {
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Properties  map[string]interface{} `json:"properties,omitempty"`
+}
+
+type IPAMPolicyResponse struct {
+	Embedded struct {
+		IPAMPolicies []IPAMPolicy `json:"ipamPolicies"`
+	} `json:"_embedded"`
+}
+
+type IPAMPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type NamingPolicyResponse struct {
+	Embedded struct {
+		NamingPolicies []NamingPolicy `json:"namingPolicies"`
+	} `json:"_embedded"`
+}
+
+type NamingPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type ADPolicyResponse struct {
+	Embedded struct {
+		ADPolicies []ADPolicy `json:"microsoftADPolicies"`
+	} `json:"_embedded"`
+}
+
+type ADPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type DNSPolicyResponse struct {
+	Embedded struct {
+		DNSPolicies []DNSPolicy `json:"dnsPolicies"`
+	} `json:"_embedded"`
+}
+
+type DNSPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -1011,6 +1079,222 @@ func (apiClient *OneFuseAPIClient) DeleteIPAMReservation(id int) error {
 }
 
 // End IPAM
+
+// Start IPAM Policies
+
+func (apiClient *OneFuseAPIClient) GetIPAMPolicy(id int) (*IPAMPolicy, error) {
+	log.Println("onefuse.apiClient: IPAMPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy, error) {
+	log.Println("onefuse.apiClient: GetIPAMPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, IPAMPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	ipamPolicies := IPAMPolicyResponse{}
+	err = json.Unmarshal(body, &ipamPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(ipamPolicies.Embedded.IPAMPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find IPAM Policy '%s'!", name))
+	}
+
+	ipamPolicy := ipamPolicies.Embedded.IPAMPolicies[0]
+
+	return &ipamPolicy, err
+}
+
+// End IPAM Policies
+
+// Start Naming Policies
+
+func (apiClient *OneFuseAPIClient) GetNamingPolicy(id int) (*NamingPolicy, error) {
+	log.Println("onefuse.apiClient: NamingPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetNamingPolicyByName(name string) (*NamingPolicy, error) {
+	log.Println("onefuse.apiClient: GetNamingPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, NamingPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	namingPolicies := NamingPolicyResponse{}
+	err = json.Unmarshal(body, &namingPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(namingPolicies.Embedded.NamingPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find Naming Policy '%s'!", name))
+	}
+
+	namingPolicy := namingPolicies.Embedded.NamingPolicies[0]
+
+	return &namingPolicy, err
+}
+
+// End Naming Policies
+
+// Start AD Policies
+
+func (apiClient *OneFuseAPIClient) GetADPolicy(id int) (*ADPolicy, error) {
+	log.Println("onefuse.apiClient: ADPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetADPolicyByName(name string) (*ADPolicy, error) {
+	log.Println("onefuse.apiClient: GetADPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, ADPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	adPolicies := ADPolicyResponse{}
+	err = json.Unmarshal(body, &adPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(adPolicies.Embedded.ADPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
+	}
+
+	adPolicy := adPolicies.Embedded.ADPolicies[0]
+
+	return &adPolicy, err
+}
+
+// End AD Policies
+
+// Start DNS Policies
+
+func (apiClient *OneFuseAPIClient) GetDNSPolicy(id int) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: DNSPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: GetDNSPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, DNSPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	dnsPolicies := DNSPolicyResponse{}
+	err = json.Unmarshal(body, &dnsPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(dnsPolicies.Embedded.DNSPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
+	}
+
+	dnsPolicy := dnsPolicies.Embedded.DNSPolicies[0]
+
+	return &dnsPolicy, err
+}
+
+// End DNS Policies
 
 // Start Static Property Set
 
