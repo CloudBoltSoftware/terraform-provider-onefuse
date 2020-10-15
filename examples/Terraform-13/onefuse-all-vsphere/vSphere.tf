@@ -41,7 +41,7 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
 
 
     // Use OneFuse generated name for VM hostname and domain
-    name = onefuse_naming.my-onefuse-name.name
+    name = onefuse_naming.machine-name.name
 
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_cluster_id = data.vsphere_datastore_cluster.datastore_cluster.id
@@ -70,8 +70,8 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
  
     customize {
       linux_options {
-        host_name  = onefuse_naming.my-onefuse-name.name
-        domain = onefuse_naming.my-onefuse-name.dns_suffix
+        host_name  = onefuse_naming.machine-name.name
+        domain = onefuse_naming.machine-name.dns_suffix
       }
  
       network_interface {

@@ -17,3 +17,14 @@ provider "onefuse" {
   password   = var.onefuse_password
   verify_ssl = var.onefuse_verify_ssl
 }
+
+data "onefuse_ad_policy" "default" {
+  name = "default"
+}
+resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
+    
+    name = "testnamehere"
+    policy_id = data.onefuse_ad_policy.default.id
+    workspace_url = var.workspace_url
+    template_properties = var.onefuse_template_properties
+}

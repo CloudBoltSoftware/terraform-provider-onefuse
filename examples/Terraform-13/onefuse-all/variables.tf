@@ -42,22 +42,17 @@ variable "onefuse_ad_policy_id" {
 
 variable "onefuse_dns_policy_id" {
   type = string
-  default = "1"
+  default = "2"
 }
 
 variable "onefuse_dns_zones" {
   type = list
-  default = ["w2k19ad.sovlabs.net"]
+  default = ["infoblox851.sovlabs.net"]
 }
 
 variable "onefuse_dns_ip" {
   type = string
   default = "10.30.6.221"
-}
-
-variable "onefuse_gateway" {
-  type = string
-  default = "10.30.29.1"
 }
 
 variable "workspace_url" {

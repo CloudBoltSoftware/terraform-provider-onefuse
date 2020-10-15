@@ -1,4 +1,22 @@
+terraform {
+  required_providers {
+    onefuse = {
+      source  = "cloudbolt.io/cloudbolt/onefuse"
+      version = ">= 1.1.0"
+    }
+  }
+  required_version = ">= 0.13"
+}
 
+provider "onefuse" {
+
+  scheme     = var.onefuse_scheme
+  address    = var.onefuse_address
+  port       = var.onefuse_port
+  user       = var.onefuse_user
+  password   = var.onefuse_password
+  verify_ssl = var.onefuse_verify_ssl
+}
 
 data "onefuse_static_property_set" "linux" {
   name = "linux"
@@ -12,12 +30,8 @@ data "onefuse_naming_policy" "machine" {
   name = "machineNaming"
 }
 
-data "onefuse_naming_policy" "deployment" {
-  name = "deploymentNaming"
-}
-
 data "onefuse_ad_policy" "default" {
-  name = "defaultAdPolicy"
+  name = "default"
 }
 
 data "onefuse_dns_policy" "dev" {
@@ -25,7 +39,6 @@ data "onefuse_dns_policy" "dev" {
 }
 
 resource "onefuse_naming" "machine-name" {
-  count                   = "2"
   naming_policy_id        = data.onefuse_naming_policy.machine.id
   dns_suffix              = ""
   template_properties = {
@@ -39,19 +52,9 @@ resource "onefuse_naming" "machine-name" {
   }
 }
 
-resource "onefuse_naming" "deployment-name" {
-  naming_policy_id        = data.onefuse_naming_policy.deployment.id
-  dns_suffix              = ""
-  template_properties = {
-      deployNameRequestSource     = "TF"
-      deployNameEnv               = "PROD"
-      deployNameApp               = "WEB"
-  }
-}
-
 resource "onefuse_microsoft_ad_computer_account" "dev" {
     
-    name = onefuse_naming.machine-name[0].name
+    name = onefuse_naming.machine-name.name
     policy_id = data.onefuse_ad_policy.default.id
     workspace_url = var.workspace_url
     template_properties = var.onefuse_template_properties
@@ -59,7 +62,7 @@ resource "onefuse_microsoft_ad_computer_account" "dev" {
 
 resource "onefuse_ipam_record" "my-ipam-record" {
     
-    hostname = format("%s.%s", onefuse_naming.machine-name[0].name, onefuse_naming.machine-name[0].dns_suffix)
+    hostname = onefuse_naming.machine-name.name
     policy_id = data.onefuse_ipam_policy.dev.id
     workspace_url = var.workspace_url
     template_properties = var.onefuse_template_properties
@@ -67,22 +70,19 @@ resource "onefuse_ipam_record" "my-ipam-record" {
 
 resource "onefuse_dns_record" "my-dns-record" {
     
-    name = onefuse_naming.machine-name[0].name
+    name = onefuse_naming.machine-name.name
     policy_id = data.onefuse_dns_policy.dev.id
     workspace_url = var.workspace_url
-    zones = [onefuse_naming.machine-name[0].dns_suffix]
+    zones = [onefuse_naming.machine-name.dns_suffix]
     value = onefuse_ipam_record.my-ipam-record.ip_address
     template_properties = var.onefuse_template_properties
 }
 
 
-output "hostname_machine_1" {
-  value = onefuse_naming.machine-name[0].name
+output "hostname" {
+  value = onefuse_naming.machine-name.name
 }
 
-output "deployment_name" {
-  value = onefuse_naming.deployment-name.name
-}
 output "ip_address" {
   value = onefuse_ipam_record.my-ipam-record.ip_address
 }
@@ -96,14 +96,10 @@ output "gateway" {
 }
 
 output "fqdn" {
-  value = format("%s.%s", onefuse_naming.machine-name[0].name, onefuse_naming.machine-name[0].dns_suffix)
+  value = format("%s.%s", onefuse_naming.machine-name.name, onefuse_naming.machine-name.dns_suffix)
 }
 
 output "ad_ou" {
   value = onefuse_microsoft_ad_computer_account.dev.final_ou
-}
-
-output "hostname_machine_2" {
-  value = onefuse_naming.machine-name[1].name
 }
 
