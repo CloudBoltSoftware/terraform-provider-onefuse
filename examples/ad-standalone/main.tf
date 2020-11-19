@@ -24,15 +24,17 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// Naming Policy data source
-data "onefuse_naming_policy" "machine" {
-  name = "machineNaming"
+// AD Policy data source
+data "onefuse_ad_policy" "default" {
+  name = "default"
 }
 
-resource "onefuse_naming" "my-onefuse-name" {
-  naming_policy_id = data.onefuse_naming_policy.machine.id // Refers to onefuse_naming_policy data source to retrieve ID
-  workspace_url    = ""                                    // Leave blank for default workspace
-  dns_suffix       = ""
+// Ad computer object resource
+resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
+
+  name          = "namehere"
+  policy_id     = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
+  workspace_url = ""                                // Leave blank for default workspace
   template_properties = {
     property1 = "value1" // Your properties and values to pass into module
     proeprty2 = "value2"
@@ -40,11 +42,7 @@ resource "onefuse_naming" "my-onefuse-name" {
   }
 }
 
-// Outputs
-output "name" {
-  value = onefuse_naming.my-onefuse-name.name
-}
-
-output "dns_suffix" {
-  value = onefuse_naming.my-onefuse-name.dns_suffix // Refers to dns_sudffix output by naming is defined in policy
+// Output Result for AD OU Placement
+output "ad_ou" {
+  value = onefuse_microsoft_ad_computer_account.my_ad_computer.final_ou
 }

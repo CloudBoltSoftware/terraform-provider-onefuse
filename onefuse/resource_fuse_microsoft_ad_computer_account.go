@@ -47,6 +47,15 @@ func resourceMicrosoftADComputerAccount() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"final_ou": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			"template_properties": {
+				Type:     schema.TypeMap,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -56,6 +65,9 @@ func bindMicrosoftADComputerAccountResource(d *schema.ResourceData, computerAcco
 
 	if err := d.Set("name", computerAccount.Name); err != nil {
 		return errors.WithMessage(err, "Cannot set name: "+computerAccount.Name)
+	}
+	if err := d.Set("final_ou", computerAccount.FinalOU); err != nil {
+		return errors.WithMessage(err, "Cannot set final OU: "+computerAccount.FinalOU)
 	}
 
 	if err := d.Set("workspace_url", computerAccount.Links.Workspace.Href); err != nil {
@@ -78,9 +90,11 @@ func resourceMicrosoftADComputerAccountCreate(d *schema.ResourceData, m interfac
 	config := m.(Config)
 
 	newComputerAccount := MicrosoftADComputerAccount{
-		Name:         d.Get("name").(string),
-		PolicyID:     d.Get("policy_id").(int),
-		WorkspaceURL: d.Get("workspace_url").(string),
+		Name:               d.Get("name").(string),
+		FinalOU:            d.Get("final_ou").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	computerAccount, err := config.NewOneFuseApiClient().CreateMicrosoftADComputerAccount(&newComputerAccount)
@@ -117,6 +131,7 @@ func resourceMicrosoftADComputerAccountUpdate(d *schema.ResourceData, m interfac
 	// Determine if a change is needed
 	changed := (d.HasChange("name") ||
 		d.HasChange("policy_id") ||
+		d.HasChange("final_ou") ||
 		d.HasChange("workspace_url"))
 
 	if !changed {
@@ -129,9 +144,11 @@ func resourceMicrosoftADComputerAccountUpdate(d *schema.ResourceData, m interfac
 	// Create the desired AD Computer Account object
 	id := d.Id()
 	desiredComputerAccount := MicrosoftADComputerAccount{
-		Name:         d.Get("name").(string),
-		PolicyID:     d.Get("policy_id").(int),
-		WorkspaceURL: d.Get("workspace_url").(string),
+		Name:               d.Get("name").(string),
+		FinalOU:            d.Get("final_ou").(string),
+		PolicyID:           d.Get("policy_id").(int),
+		WorkspaceURL:       d.Get("workspace_url").(string),
+		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
 	intID, err := strconv.Atoi(id)

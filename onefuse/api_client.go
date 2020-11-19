@@ -27,6 +27,13 @@ const WorkspaceResourceType = "workspaces"
 const MicrosoftADPolicyResourceType = "microsoftADPolicies"
 const MicrosoftADComputerAccountResourceType = "microsoftADComputerAccounts"
 const ModuleEndpointResourceType = "endpoints"
+const DNSReservationResourceType = "dnsReservations"
+const IPAMReservationResourceType = "ipamReservations"
+const StaticPropertySetResourceType = "propertySets"
+const IPAMPolicyResourceType = "ipamPolicies"
+const NamingPolicyResourceType = "namingPolicies"
+const ADPolicyResourceType = "microsoftADPolicies"
+const DNSPolicyResourceType = "dnsPolicies"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -106,11 +113,134 @@ type MicrosoftADComputerAccount struct {
 		Policy      LinkRef `json:"policy,omitempty"`
 		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
 	} `json:"_links,omitempty"`
-	ID           int    `json:"id,omitempty"`
-	Name         string `json:"name,omitempty"`
-	PolicyID     int    `json:"policyId,omitempty"`
-	Policy       string `json:"policy,omitempty"`
-	WorkspaceURL string `json:"workspace,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	Name               string                 `json:"name,omitempty"`
+	FinalOU            string                 `json:"finalOu"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+}
+
+type DNSReservation struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	Name               string                 `json:"name,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	Value              string                 `json:"value,omitempty"`
+	Zones              []string               `json:"zones,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+}
+
+type IPAMReservation struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	Hostname           string                 `json:"hostname,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	IPaddress          string                 `json:"ipAddress,omitempty"`
+	Gateway            string                 `json:"gateway,omitempty"`
+	PrimaryDNS         string                 `json:"primaryDns"`
+	SecondaryDNS       string                 `json:"secondaryDns"`
+	Network            string                 `json:"network,omitempty"`
+	DNSSuffix          string                 `json:"dnsSuffix,omitempty"`
+	Netmask            string                 `json:"netmask,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
+}
+
+type StaticPropertySetResponse struct {
+	Embedded struct {
+		PropertySets []StaticPropertySet `json:"propertySets"`
+	} `json:"_embedded"`
+}
+
+type StaticPropertySet struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int                    `json:"id,omitempty"`
+	Type        string                 `json:"type,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Properties  map[string]interface{} `json:"properties,omitempty"`
+}
+
+type IPAMPolicyResponse struct {
+	Embedded struct {
+		IPAMPolicies []IPAMPolicy `json:"ipamPolicies"`
+	} `json:"_embedded"`
+}
+
+type IPAMPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type NamingPolicyResponse struct {
+	Embedded struct {
+		NamingPolicies []NamingPolicy `json:"namingPolicies"`
+	} `json:"_embedded"`
+}
+
+type NamingPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type ADPolicyResponse struct {
+	Embedded struct {
+		ADPolicies []ADPolicy `json:"microsoftADPolicies"`
+	} `json:"_embedded"`
+}
+
+type ADPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type DNSPolicyResponse struct {
+	Embedded struct {
+		DNSPolicies []DNSPolicy `json:"dnsPolicies"`
+	} `json:"_embedded"`
+}
+
+type DNSPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -138,7 +268,7 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, wor
 	}
 
 	postBody := map[string]interface{}{
-		"namingPolicy":       fmt.Sprintf("/%s/%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
+		"policy":             fmt.Sprintf("/%s/%s/namingPolicies/%s/", ApiVersion, ApiNamespace, namingPolicyID),
 		"templateProperties": templateProperties,
 		"workspace":          fmt.Sprintf("/%s/%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
 	}
@@ -645,6 +775,580 @@ func (apiClient *OneFuseAPIClient) DeleteMicrosoftADComputerAccount(id int) erro
 
 	return checkForErrors(res)
 }
+
+//DNS Functions
+
+//Create DNS Reservation
+
+func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReservation) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: CreateDNSReservation")
+
+	config := apiClient.config
+
+	// Default workspace if it was not provided
+	if newDNSRecord.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		newDNSRecord.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	if newDNSRecord.Policy == "" {
+		if newDNSRecord.PolicyID != 0 {
+			newDNSRecord.Policy = itemURL(config, WorkspaceResourceType, newDNSRecord.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: DNS Record Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: DNS Record Create requires a PolicyID or Policy URL")
+	}
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/dnsReservations/
+	url := collectionURL(config, DNSReservationResourceType)
+
+	jsonBytes, err := json.Marshal(newDNSRecord)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	// Create the create request
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	// Make the create request
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	dnsRecord := DNSReservation{}
+	if err = json.Unmarshal(body, &dnsRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &dnsRecord, nil
+}
+
+//Get DNS Reservation
+
+func (apiClient *OneFuseAPIClient) GetDNSReservation(id int) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: GetDNSReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, DNSReservationResourceType, id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
+	}
+	defer res.Body.Close()
+
+	dnsRecord := DNSReservation{}
+	if err = json.Unmarshal(body, &dnsRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &dnsRecord, err
+}
+
+//Update DNS Record
+
+func (apiClient *OneFuseAPIClient) UpdateDNSReservation(id int, updatedDNSReservation *DNSReservation) (*DNSReservation, error) {
+	log.Println("onefuse.apiClient: UpdateDNSReservation")
+
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteDNSReservation(id int) error {
+	log.Println("onefuse.apiClient: DeleteDNSReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, DNSReservationResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
+	return checkForErrors(res)
+}
+
+//Create IPAM Reservation
+
+func (apiClient *OneFuseAPIClient) CreateIPAMReservation(newIPAMRecord *IPAMReservation) (*IPAMReservation, error) {
+	log.Println("onefuse.apiClient: CreateIPAMReservation")
+
+	config := apiClient.config
+
+	// Default workspace if it was not provided
+	if newIPAMRecord.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		newIPAMRecord.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+
+	if newIPAMRecord.Policy == "" {
+		if newIPAMRecord.PolicyID != 0 {
+			newIPAMRecord.Policy = itemURL(config, WorkspaceResourceType, newIPAMRecord.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: IPAM Record Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: IPAM Record Create requires a PolicyID or Policy URL")
+	}
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/ipamReservations/
+	url := collectionURL(config, IPAMReservationResourceType)
+
+	jsonBytes, err := json.Marshal(newIPAMRecord)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	// Create the create request
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	// Make the create request
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+	}
+	defer res.Body.Close()
+
+	ipamRecord := IPAMReservation{}
+	if err = json.Unmarshal(body, &ipamRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &ipamRecord, nil
+}
+
+//Get IPAM Reservation
+
+func (apiClient *OneFuseAPIClient) GetIPAMReservation(id int) (*IPAMReservation, error) {
+	log.Println("onefuse.apiClient: GetIPAMReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, IPAMReservationResourceType, id)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
+	}
+	defer res.Body.Close()
+
+	ipamRecord := IPAMReservation{}
+	if err = json.Unmarshal(body, &ipamRecord); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return &ipamRecord, err
+}
+
+//Update IPAM Record
+
+func (apiClient *OneFuseAPIClient) UpdateIPAMReservation(id int, updatedIPAMReservation *IPAMReservation) (*IPAMReservation, error) {
+	log.Println("onefuse.apiClient: UpdateIPAMReservation")
+
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteIPAMReservation(id int) error {
+	log.Println("onefuse.apiClient: DeleteIPAMReservation")
+
+	config := apiClient.config
+
+	url := itemURL(config, IPAMReservationResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	}
+
+	return checkForErrors(res)
+}
+
+// End IPAM
+
+// Start IPAM Policies
+
+func (apiClient *OneFuseAPIClient) GetIPAMPolicy(id int) (*IPAMPolicy, error) {
+	log.Println("onefuse.apiClient: IPAMPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy, error) {
+	log.Println("onefuse.apiClient: GetIPAMPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, IPAMPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	ipamPolicies := IPAMPolicyResponse{}
+	err = json.Unmarshal(body, &ipamPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(ipamPolicies.Embedded.IPAMPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find IPAM Policy '%s'!", name))
+	}
+
+	ipamPolicy := ipamPolicies.Embedded.IPAMPolicies[0]
+
+	return &ipamPolicy, err
+}
+
+// End IPAM Policies
+
+// Start Naming Policies
+
+func (apiClient *OneFuseAPIClient) GetNamingPolicy(id int) (*NamingPolicy, error) {
+	log.Println("onefuse.apiClient: NamingPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetNamingPolicyByName(name string) (*NamingPolicy, error) {
+	log.Println("onefuse.apiClient: GetNamingPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, NamingPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	namingPolicies := NamingPolicyResponse{}
+	err = json.Unmarshal(body, &namingPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(namingPolicies.Embedded.NamingPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find Naming Policy '%s'!", name))
+	}
+
+	namingPolicy := namingPolicies.Embedded.NamingPolicies[0]
+
+	return &namingPolicy, err
+}
+
+// End Naming Policies
+
+// Start AD Policies
+
+func (apiClient *OneFuseAPIClient) GetADPolicy(id int) (*ADPolicy, error) {
+	log.Println("onefuse.apiClient: ADPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetADPolicyByName(name string) (*ADPolicy, error) {
+	log.Println("onefuse.apiClient: GetADPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, ADPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	adPolicies := ADPolicyResponse{}
+	err = json.Unmarshal(body, &adPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(adPolicies.Embedded.ADPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
+	}
+
+	adPolicy := adPolicies.Embedded.ADPolicies[0]
+
+	return &adPolicy, err
+}
+
+// End AD Policies
+
+// Start DNS Policies
+
+func (apiClient *OneFuseAPIClient) GetDNSPolicy(id int) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: DNSPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, error) {
+	log.Println("onefuse.apiClient: GetDNSPolicyByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, DNSPolicyResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	dnsPolicies := DNSPolicyResponse{}
+	err = json.Unmarshal(body, &dnsPolicies)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(dnsPolicies.Embedded.DNSPolicies) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
+	}
+
+	dnsPolicy := dnsPolicies.Embedded.DNSPolicies[0]
+
+	return &dnsPolicy, err
+}
+
+// End DNS Policies
+
+// Start Static Property Set
+
+func (apiClient *OneFuseAPIClient) GetStaticPropertySet(id int) (*StaticPropertySet, error) {
+	log.Println("onefuse.apiClient: GetStaticPropertySet")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*StaticPropertySet, error) {
+	log.Println("onefuse.apiClient: GetStaticPropertySetByName")
+
+	config := apiClient.config
+	url := fmt.Sprintf("%s?filter=name:%s;type:static", collectionURL(config, StaticPropertySetResourceType), name)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	staticPropertySets := StaticPropertySetResponse{}
+	err = json.Unmarshal(body, &staticPropertySets)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	if len(staticPropertySets.Embedded.PropertySets) < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find staticPropertySet '%s'!", name))
+	}
+
+	staticPropertySet := staticPropertySets.Embedded.PropertySets[0]
+
+	return &staticPropertySet, err
+}
+
+// End Static Property Set
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")
