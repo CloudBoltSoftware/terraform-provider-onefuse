@@ -1,7 +1,6 @@
 # <onefuse_dns_policy> Resource
 
-Description of what this resource does, with links to official
-app/service documentation.
+Use this resource to create a DNS record.
 
 ## Example Usage
 
@@ -25,9 +24,18 @@ resource "onefuse_dns_record" "my_dns_record" {
 
 ## Argument Reference
 
-* `name` - (Required) The name of the dns record.
-* 'policy_id' - (Required) 
+* `name` - (Required) The short name of the computer object.
+
+* `policy_id` - (Required) The id of the policy object in OneFuse (add example of format) 
+
+* `workspace_url` - (Optional) The URL of the workspace being used in OneFuse
+
+* `zones` - (Required) An array of DNS zones
+
+* `value` - (Required) The value of the DNS record (i,e. IP address)
+
+* `template_properties` - (Optional) Additional properties that can be pushed to OneFuse and referenced within the policy
 
 ## Attribute Reference
 
-* `attribute_name` - List attributes that this resource exports.
+* `workspace_url` - Value of default Workspace URL, if no URL is provided

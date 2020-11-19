@@ -1,7 +1,6 @@
 # onefuse_dns_policy Data Source
 
-Description of what this resource does, with links to official
-app/service documentation.
+Use this resource to lookup Policy ID by Policy Name.
 
 ## Example Usage
 
@@ -13,8 +12,10 @@ data "onefuse_dns_policy" "dns_policy" {
 
 ## Argument Reference
 
-* `attribute_name` - (Optional/Required) List arguments this resource takes.
+* `name` - (Required) The name of the DNS policy
 
 ## Attribute Reference
 
-* `attribute_name` - List attributes that this resource exports.exports
+* `ID` - ID of the DNS policy
+
+* `description` - The description of the DNS policy

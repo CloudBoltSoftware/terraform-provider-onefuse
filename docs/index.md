@@ -1,7 +1,7 @@
 # <provider> Provider
 
-Summary of what the provider is for, including use cases and links to
-app/service documentation.
+OneFuse is the first codeless solution for automating, integrating, and extending private and hybrid cloud infrastructure. Through OneFuse’s dynamic templating technology, enterprises can build integrations (e.g., for IT technologies like IPAM, DNS, networking and security, etc.) into API-consumable policies for sharing across various IT teams and cloud environments. [Cloudbolt Documentation](https://docs.cloudbolt.io/)
+
 
 Only uncomment the following declaration if using Terraform v0.13
 Leave commented for Terraform v0.12
@@ -34,4 +34,14 @@ provider "onefuse" {
 
 ## Argument Reference
 
-- List any arguments for the provider block.
+* `address` - (Optional) OneFuse REST endpoint service port number
+
+* `port` - (Required) OneFuse REST endpoint service port number
+
+* `user` - (Required) OneFuse REST endpoint user name
+
+* `password` - (Required) OneFuse REST endpoint password
+
+* `scheme` - (Required) OneFuse REST endpoint service host address
+
+* `verify_ss1` - (Required) Verify SSL certificates for OneFuse endpoints
