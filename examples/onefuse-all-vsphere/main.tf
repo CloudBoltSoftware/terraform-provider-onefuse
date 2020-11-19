@@ -3,8 +3,8 @@
  terraform {
   required_providers {
     onefuse = {
-      source  = "cloudbolt.io/cloudbolt/onefuse"
-      version = ">= 1.1.0"
+      source = "CloudBoltSoftware/onefuse"
+      version = ">= 1.10.1"
     }
   }
   required_version = ">= 0.13"

@@ -1,10 +1,10 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
-      source  = "cloudbolt.io/cloudbolt/onefuse"
-      version = ">= 1.1.0"
+      source  = "CloudBoltSoftware/onefuse"
+      version = ">= 1.10.1"
     }
   }
   required_version = ">= 0.13"
@@ -30,13 +30,13 @@ data "onefuse_naming_policy" "machine" {
 }
 
 resource "onefuse_naming" "my-onefuse-name" {
-  naming_policy_id        = data.onefuse_naming_policy.machine.id // Refers to onefuse_naming_policy data source to retrieve ID
-  workspace_url = "" // Leave blank for default workspace
-  dns_suffix              = ""
-  template_properties     = {
-        property1        = "value1" // Your properties and values to pass into module
-        proeprty2        = "value2"
-        property3        = "value3"
+  naming_policy_id = data.onefuse_naming_policy.machine.id // Refers to onefuse_naming_policy data source to retrieve ID
+  workspace_url    = ""                                    // Leave blank for default workspace
+  dns_suffix       = ""
+  template_properties = {
+    property1 = "value1" // Your properties and values to pass into module
+    proeprty2 = "value2"
+    property3 = "value3"
   }
 }
 

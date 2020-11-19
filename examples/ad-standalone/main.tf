@@ -1,10 +1,10 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
-      source  = "cloudbolt.io/cloudbolt/onefuse"
-      version = ">= 1.1.0"
+      source  = "CloudBoltSoftware/onefuse"
+      version = ">= 1.10.1"
     }
   }
   required_version = ">= 0.13"
@@ -31,14 +31,14 @@ data "onefuse_ad_policy" "default" {
 
 // Ad computer object resource
 resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
-    
-    name = "namehere"
-    policy_id = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
-    workspace_url = "" // Leave blank for default workspace
-    template_properties = {
-      property1        = "value1" // Your properties and values to pass into module
-      proeprty2        = "value2"
-      property3        = "value3"
+
+  name          = "namehere"
+  policy_id     = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
+  workspace_url = ""                                // Leave blank for default workspace
+  template_properties = {
+    property1 = "value1" // Your properties and values to pass into module
+    proeprty2 = "value2"
+    property3 = "value3"
   }
 }
 

@@ -3,7 +3,7 @@
  terraform {
   required_providers {
     onefuse = {
-      source  = "cloudbolt.io/cloudbolt/onefuse"
+      source = "CloudBoltSoftware/onefuse"
       version = ">= 1.1.0"
     }
   }
@@ -25,15 +25,15 @@ provider "onefuse" {
 }
 
 // DNS Policy data source
-data "onefuse_dns_policy" "my_dns" {
-  name = "infoblox851_dnspolicy"
-}
+//data "onefuse_dns_policy" "my_dns" {
+ // name = "infoblox851_dnspolicy"
+//}
 
 // DNS computer object resource
 resource "onefuse_dns_record" "my-dns-record" {
     
     name = "hostname"
-    policy_id = data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
+    policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace
     zones = ["dnszone1,dnszone2"] // Comma seperated dns zones.  At least one zone required
     value = "ipAddress" // IP Address
