@@ -1,4 +1,4 @@
-# <onefuse_dns_policy> Resource
+# Resource: onefuse_dns_policy
 
 Use this resource to create a DNS record.
 
