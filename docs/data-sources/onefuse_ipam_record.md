@@ -1,4 +1,4 @@
-# onefuse_dns_policy Data Source
+# Data Source: onefuse_dns_policy
 
 Use this resource to lookup Policy ID by Policy Name.
 
