@@ -1,4 +1,4 @@
-# <provider> Provider
+# OneFuse Provider
 
 OneFuse is the first codeless solution for automating, integrating, and extending private and hybrid cloud infrastructure. Through OneFuse’s dynamic templating technology, enterprises can build integrations (e.g., for IT technologies like IPAM, DNS, networking and security, etc.) into API-consumable policies for sharing across various IT teams and cloud environments. [Cloudbolt Documentation](https://docs.cloudbolt.io/)
 
