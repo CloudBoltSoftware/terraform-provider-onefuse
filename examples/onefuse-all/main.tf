@@ -35,7 +35,7 @@ data "onefuse_ipam_policy" "ipam_policy" {
 
 // Naming Policy data source
 data "onefuse_naming_policy" "machine" {
-  name = "machineNaming"
+  name = "machine"
 }
 
 // AD Policy data source

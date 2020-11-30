@@ -25,7 +25,7 @@ provider "onefuse" {
 
 // Naming Policy data source
 data "onefuse_naming_policy" "machine" {
-  name = "machineNaming"
+  name = "machine"
 }
 
 resource "onefuse_naming" "my-onefuse-name" {
