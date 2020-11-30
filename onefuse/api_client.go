@@ -164,9 +164,11 @@ type IPAMReservation struct {
 	PrimaryDNS         string                 `json:"primaryDns"`
 	SecondaryDNS       string                 `json:"secondaryDns"`
 	Network            string                 `json:"network,omitempty"`
+	Subnet             string                 `json:"subnet,omitempty"`
 	DNSSuffix          string                 `json:"dnsSuffix,omitempty"`
 	Netmask            string                 `json:"netmask,omitempty"`
-	TemplateProperties map[string]interface{} `json:"template_properties"`
+	NicLabel           string                 `json:"nicLabel,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
 }
 
 type StaticPropertySetResponse struct {

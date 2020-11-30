@@ -60,6 +60,12 @@ func resourceIPAMReservation() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+			"subnet": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
 			"primary_dns": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -67,6 +73,12 @@ func resourceIPAMReservation() *schema.Resource {
 				ForceNew: true,
 			},
 			"secondary_dns": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+			"nicLabel": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -107,7 +119,7 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 	}
 
 	if err := d.Set("ip_address", ipamRecord.IPaddress); err != nil {
-		return errors.WithMessage(err, "Cannot set Netmask: "+ipamRecord.IPaddress)
+		return errors.WithMessage(err, "Cannot set IPAddress: "+ipamRecord.IPaddress)
 	}
 
 	if err := d.Set("netmask", ipamRecord.Netmask); err != nil {
@@ -130,8 +142,15 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 		return errors.WithMessage(err, "Cannot set Network: "+ipamRecord.Network)
 	}
 
+	if err := d.Set("subnet", ipamRecord.Subnet); err != nil {
+		return errors.WithMessage(err, "Cannot set Subnet: "+ipamRecord.Subnet)
+	}
+
+	if err := d.Set("nicLabel", ipamRecord.NicLabel); err != nil {
+		return errors.WithMessage(err, "Cannot set NicLabel: "+ipamRecord.NicLabel)
+	}
 	if err := d.Set("dns_suffix", ipamRecord.DNSSuffix); err != nil {
-		return errors.WithMessage(err, "Cannot set Network: "+ipamRecord.DNSSuffix)
+		return errors.WithMessage(err, "Cannot set DNSSuffix: "+ipamRecord.DNSSuffix)
 	}
 
 	ipamPolicyURLSplit := strings.Split(ipamRecord.Links.Policy.Href, "/")
@@ -160,11 +179,13 @@ func resourceIPAMReservationCreate(d *schema.ResourceData, m interface{}) error 
 		WorkspaceURL:       d.Get("workspace_url").(string),
 		IPaddress:          d.Get("ip_address").(string),
 		Netmask:            d.Get("netmask").(string),
+		Subnet:             d.Get("subnet").(string),
 		Gateway:            d.Get("gateway").(string),
 		Network:            d.Get("network").(string),
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
+		NicLabel:           d.Get("nicLabel").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
@@ -205,11 +226,13 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		d.HasChange("workspace_url")) ||
 		d.HasChange("ip_address") ||
 		d.HasChange("netmask") ||
+		d.HasChange("subnet") ||
 		d.HasChange("network") ||
 		d.HasChange("gateway") ||
 		d.HasChange("primary_dns") ||
 		d.HasChange("secondary_dns") ||
 		d.HasChange("dns_suffix") ||
+		d.HasChange("nicLabel") ||
 		d.HasChange("template_properties")
 
 	if !changed {
@@ -232,11 +255,13 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		WorkspaceURL:       d.Get("workspace_url").(string),
 		IPaddress:          d.Get("ip_address").(string),
 		Netmask:            d.Get("netmask").(string),
+		Subnet:             d.Get("subnet").(string),
 		Gateway:            d.Get("gateway").(string),
 		Network:            d.Get("network").(string),
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
+		NicLabel:           d.Get("nicLabel").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
