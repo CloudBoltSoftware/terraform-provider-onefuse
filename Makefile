@@ -26,12 +26,10 @@ build: fmtcheck
 
 install: build
 	mkdir -p $(TF_PLUGINS_DIR)
-	rm $(TF_PLUGINS_DIR)/$(PLUGIN_EXECUTABLE)
-	cp $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
 	# Terraform 0.12 compatability
 	mkdir -p $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
-	rm $(TF_PLUGINS_DIR_0.12)/$(PLUGIN_EXECUTABLE) # TODO: Drop support for TF 0.12
-	cp $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
 
 # Format code
 fmt:

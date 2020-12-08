@@ -16,6 +16,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -34,6 +35,10 @@ const IPAMPolicyResourceType = "ipamPolicies"
 const NamingPolicyResourceType = "namingPolicies"
 const ADPolicyResourceType = "microsoftADPolicies"
 const DNSPolicyResourceType = "dnsPolicies"
+const JobStatusResourceType = "jobStatus"
+
+const JobSuccess = "Successful"
+const JobFailed = "Failed"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -41,7 +46,6 @@ type OneFuseAPIClient struct {
 
 type CustomName struct {
 	Id        int
-	Version   int
 	Name      string
 	DnsSuffix string
 }
@@ -243,6 +247,27 @@ type DNSPolicy struct {
 	Description string `json:"description,omitempty"`
 }
 
+type JobStatus struct {
+	Links *struct {
+		Self          LinkRef `json:"self,omitempty"`
+		JobMetadata   LinkRef `json:"jobMetadata,omitempty"`
+		ManagedObject LinkRef `json:managedObject,omitempty"`
+		Policy        LinkRef `json:"policy,omitempty"`
+		Workspace     LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                  int    `json:"id,omitempty"`
+	JobStateDescription string `json:"jobStateDescription,omitempty"`
+	JobState            string `json:"jobState,omitempty"`
+	JobTrackingID       string `json:"jobTrackingId,omitempty"`
+	JobType             string `json:"jobType,omitempty"`
+	ErrorDetails        *struct {
+		Code   int `json:"code,omitempty"`
+		Errors *[]struct {
+			Message string `json:"message,omitempty"`
+		} `json:"errors,omitempty"`
+	} `json:errorDetails,omitempty"`
+}
+
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	return &OneFuseAPIClient{
 		config: c,
@@ -289,22 +314,15 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, wor
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
-	}
-
-	body, err := readResponse(res)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from %s %s", url, requestBody))
-	}
-	defer res.Body.Close()
-
 	customName := CustomName{}
-	if err = json.Unmarshal(body, &customName); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	var jobStatus *JobStatus
+	jobStatus, err = handleAsyncRequestAndFetchManagdObject(req, config, &customName, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	if err = checkForJobErrors(jobStatus); err != nil {
+		return nil, err
 	}
 
 	return &customName, nil
@@ -316,33 +334,11 @@ func (apiClient *OneFuseAPIClient) GetCustomName(id int) (*CustomName, error) {
 	config := apiClient.config
 
 	url := itemURL(config, NamingResourceType, id)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
-	}
-	defer res.Body.Close()
-
 	customName := CustomName{}
-	if err = json.Unmarshal(body, &customName); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+
+	err := doGet(config, url, &customName)
+	if err != nil {
+		return nil, err
 	}
 
 	return &customName, nil
@@ -362,14 +358,10 @@ func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
+	var jobStatus *JobStatus
+	jobStatus, err = handleAsyncRequest(req, config, "DELETE")
 
-	res, err := client.Do(req)
-	if err != nil {
-		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
-	}
-
-	return checkForErrors(res)
+	return checkForJobErrors(jobStatus)
 }
 
 func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (*MicrosoftEndpoint, error) {
@@ -1147,34 +1139,10 @@ func (apiClient *OneFuseAPIClient) GetNamingPolicyByName(name string) (*NamingPo
 	config := apiClient.config
 	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, NamingPolicyResourceType), name)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
-	}
-	defer res.Body.Close()
-
 	namingPolicies := NamingPolicyResponse{}
-	err = json.Unmarshal(body, &namingPolicies)
+	err := doGet(config, url, &namingPolicies)
 	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+		return nil, err
 	}
 
 	if len(namingPolicies.Embedded.NamingPolicies) < 1 {
@@ -1350,6 +1318,120 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 
 // End Static Property Set
 
+func GetJobStatus(id int, config *Config) (*JobStatus, error) {
+	log.Println("onefuse.apiClient: GetJobStatus")
+
+	url := itemURL(config, JobStatusResourceType, id)
+	result := JobStatus{}
+
+	err := doGet(config, url, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func handleAsyncRequestAndFetchManagdObject(req *http.Request, config *Config, responseObject interface{}, httpVerb string) (jobStatus *JobStatus, err error) {
+
+	if jobStatus, err = handleAsyncRequest(req, config, httpVerb); err != nil {
+		return
+	}
+
+	url := urlFromHref(config, jobStatus.Links.ManagedObject.Href)
+	err = doGet(config, url, &responseObject)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobStatus, nil
+}
+
+func handleAsyncRequest(req *http.Request, config *Config, httpVerb string) (jobStatus *JobStatus, err error) {
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+		return jobStatus, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request %s %s %s", httpVerb, req.URL, body))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return nil, err
+	}
+
+	body, err := readResponse(res)
+	if err != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+		return jobStatus, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from %s %s %s", httpVerb, req.URL, body))
+	}
+	defer res.Body.Close()
+
+	if err = json.Unmarshal(body, &jobStatus); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	jobStatus, err = waitForJob(jobStatus.ID, config)
+	if err != nil {
+		return
+	}
+	return jobStatus, nil
+}
+
+func doGet(config *Config, url string, v interface{}) (err error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+	res, err := client.Do(req)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
+	}
+	defer res.Body.Close()
+
+	if err = json.Unmarshal(body, &v); err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+
+	return nil
+}
+
+func waitForJob(jobID int, config *Config) (jobStatus *JobStatus, err error) {
+	jobStatusDescription := ""
+	PollingTimeoutMS := 60000
+	PollingIntervalMS := 2000
+	startTime := time.Now()
+	for jobStatusDescription != JobSuccess && jobStatusDescription != JobFailed {
+		jobStatus, err = GetJobStatus(jobID, config)
+		if err != nil {
+			return nil, err
+		}
+
+		jobStatusDescription = jobStatus.JobState
+		log.Println(jobStatus)
+
+		time.Sleep(time.Duration(PollingIntervalMS) * time.Millisecond)
+		if time.Since(startTime) > (time.Duration(PollingTimeoutMS) * time.Millisecond) {
+			panic("Timed out while waiting for job to complete.")
+		}
+	}
+	return jobStatus, nil
+}
+
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")
 
@@ -1425,6 +1507,13 @@ func checkForErrors(res *http.Response) error {
 	return nil
 }
 
+func checkForJobErrors(jobStatus *JobStatus) error {
+	if jobStatus.JobState != JobSuccess {
+		return errors.New(fmt.Sprintf("Job %s (%d) failed with message %#v", jobStatus.JobType, jobStatus.ID, jobStatus.ErrorDetails.Errors))
+	}
+	return nil
+}
+
 func setStandardHeaders(req *http.Request) {
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "*/*")
@@ -1445,6 +1534,10 @@ func collectionURL(config *Config, resourceType string) string {
 	baseURL := fmt.Sprintf("%s://%s:%s", config.scheme, config.address, config.port)
 	endpoint := path.Join(ApiVersion, ApiNamespace, resourceType)
 	return fmt.Sprintf("%s/%s/", baseURL, endpoint)
+}
+
+func urlFromHref(config *Config, href string) string {
+	return fmt.Sprintf("%s://%s:%s%s", config.scheme, config.address, config.port, href)
 }
 
 func itemURL(config *Config, resourceType string, id int) string {
