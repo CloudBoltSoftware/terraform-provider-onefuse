@@ -100,10 +100,10 @@ func TestResourceMicrosoftADPolicyGet(t *testing.T) {
 		t.Errorf("Bad OU for AD policy; expected '%s' but got '%s'", policyVerify.OU, policy.OU)
 	}
 	if policyVerify.CreateOU != policy.CreateOU {
-		t.Errorf("Bad CreateOU for AD policy; expected '%s' but got '%s'", policyVerify.CreateOU, policy.CreateOU)
+		t.Errorf("Bad CreateOU for AD policy; expected '%t' but got '%t'", policyVerify.CreateOU, policy.CreateOU)
 	}
 	if policyVerify.RemoveOU != policy.RemoveOU {
-		t.Errorf("Bad RemoveOU for AD policy; expected '%s' but got '%s'", policyVerify.RemoveOU, policy.RemoveOU)
+		t.Errorf("Bad RemoveOU for AD policy; expected '%t' but got '%t'", policyVerify.RemoveOU, policy.RemoveOU)
 	}
 	if !testSliceEq(policyVerify.SecurityGroups, policy.SecurityGroups) {
 		t.Errorf("Bad SecurityGroups for AD policy; expected '%s' but got '%s'", policyVerify.SecurityGroups, policy.SecurityGroups)
@@ -149,10 +149,10 @@ func TestResourceMicrosoftADPolicyUpdate(t *testing.T) {
 		t.Errorf("Bad OU for AD policy; expected '%s' but got '%s'", updatedPolicy.OU, policy.OU)
 	}
 	if updatedPolicy.CreateOU != newPolicy.CreateOU {
-		t.Errorf("Bad CreateOU for AD policy; expected '%s' but got '%s'", updatedPolicy.CreateOU, newPolicy.CreateOU)
+		t.Errorf("Bad CreateOU for AD policy; expected '%t' but got '%t'", updatedPolicy.CreateOU, newPolicy.CreateOU)
 	}
 	if updatedPolicy.RemoveOU != newPolicy.RemoveOU {
-		t.Errorf("Bad RemoveOU for AD policy; expected '%s' but got '%s'", updatedPolicy.RemoveOU, newPolicy.RemoveOU)
+		t.Errorf("Bad RemoveOU for AD policy; expected '%t' but got '%t'", updatedPolicy.RemoveOU, newPolicy.RemoveOU)
 	}
 	if !testSliceEq(updatedPolicy.SecurityGroups, newPolicy.SecurityGroups) {
 		t.Errorf("Bad SecurityGroups for AD policy; expected '%s' but got '%s'", updatedPolicy.SecurityGroups, newPolicy.SecurityGroups)

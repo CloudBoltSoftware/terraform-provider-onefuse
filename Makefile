@@ -13,7 +13,7 @@ HOSTOS := $$(go env GOHOSTOS)
 HOSTARCH := $$(go env GOHOSTARCH)
 PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION)
 TF_PLUGINS_DIR_0.12 := $(HOME)/.terraform.d/plugins/$(HOSTOS)_$(HOSTARCH)# TODO: Drop support for TF 0.12
-TF_PLUGINS_DIR := $(HOME)/.terraform.d/plugins/cloudbolt.io/terraform/$(PKGNAME)/$(VERSION_NUM)/$(HOSTOS)_$(HOSTARCH)
+TF_PLUGINS_DIR := $(HOME)/.terraform.d/plugins/registry.terraform.io/CloudBoltSoftware/$(PKGNAME)/$(VERSION_NUM)/$(HOSTOS)_$(HOSTARCH)
 
 GOFMT_FILES?=$$(find . -name '*.go' -not -path './vendor/*' -not -path './go/*')
 
@@ -26,12 +26,10 @@ build: fmtcheck
 
 install: build
 	mkdir -p $(TF_PLUGINS_DIR)
-	rm $(TF_PLUGINS_DIR)/$(PLUGIN_EXECUTABLE)
-	cp $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
 	# Terraform 0.12 compatability
 	mkdir -p $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
-	rm $(TF_PLUGINS_DIR_0.12)/$(PLUGIN_EXECUTABLE) # TODO: Drop support for TF 0.12
-	cp $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
 
 # Format code
 fmt:
