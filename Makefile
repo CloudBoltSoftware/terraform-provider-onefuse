@@ -13,7 +13,7 @@ HOSTOS := $$(go env GOHOSTOS)
 HOSTARCH := $$(go env GOHOSTARCH)
 PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION)
 TF_PLUGINS_DIR_0.12 := $(HOME)/.terraform.d/plugins/$(HOSTOS)_$(HOSTARCH)# TODO: Drop support for TF 0.12
-TF_PLUGINS_DIR := $(HOME)/.terraform.d/plugins/cloudbolt.io/terraform/$(PKGNAME)/$(VERSION_NUM)/$(HOSTOS)_$(HOSTARCH)
+TF_PLUGINS_DIR := $(HOME)/.terraform.d/plugins/registry.terraform.io/CloudBoltSoftware/$(PKGNAME)/$(VERSION_NUM)/$(HOSTOS)_$(HOSTARCH)
 
 GOFMT_FILES?=$$(find . -name '*.go' -not -path './vendor/*' -not -path './go/*')
 
