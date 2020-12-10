@@ -34,7 +34,7 @@ func TestGenerateCustomName(t *testing.T) {
 
 func TestGetCustomName(t *testing.T) {
 	config := GetConfig()
-	cn1, err := config.NewOneFuseApiClient().GenerateCustomName("sovlabs.net", getEnv("CB_ONEFUSE_CFG_NAMING_POLICY_ID", "1"), "", nil)
+	cn1, err := config.NewOneFuseApiClient().GenerateCustomName(getEnv("CB_ONEFUSE_CFG_NAMING_POLICY_ID", "1"), "", nil)
 	if err != nil {
 		t.Errorf("generate custom name error '%s'", err)
 		return
