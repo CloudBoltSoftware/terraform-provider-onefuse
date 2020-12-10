@@ -358,10 +358,11 @@ func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
 
 	setHeaders(req, config)
 
-	var jobStatus *JobStatus
-	jobStatus, err = handleAsyncRequest(req, config, "DELETE")
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
+	}
 
-	return checkForJobErrors(jobStatus)
+	return nil
 }
 
 func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (*MicrosoftEndpoint, error) {
@@ -821,27 +822,12 @@ func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReserva
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
-
-	// Make the create request
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
-	}
-	defer res.Body.Close()
-
 	dnsRecord := DNSReservation{}
-	if err = json.Unmarshal(body, &dnsRecord); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	var jobStatus *JobStatus
+
+	jobStatus, err = handleAsyncRequestAndFetchManagdObject(req, config, &dnsRecord, "POST")
+	if err != nil {
+		return nil, err
 	}
 
 	return &dnsRecord, nil
@@ -856,33 +842,11 @@ func (apiClient *OneFuseAPIClient) GetDNSReservation(id int) (*DNSReservation, e
 
 	url := itemURL(config, DNSReservationResourceType, id)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
-	}
-	defer res.Body.Close()
-
 	dnsRecord := DNSReservation{}
-	if err = json.Unmarshal(body, &dnsRecord); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+
+	err := doGet(config, url, &dnsRecord)
+	if err != nil {
+		return nil, err
 	}
 
 	return &dnsRecord, err
@@ -910,14 +874,10 @@ func (apiClient *OneFuseAPIClient) DeleteDNSReservation(id int) error {
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
 	}
-
-	return checkForErrors(res)
+	return nil
 }
 
 //Create IPAM Reservation
@@ -1223,34 +1183,10 @@ func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, 
 	config := apiClient.config
 	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, DNSPolicyResourceType), name)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
-	}
-	defer res.Body.Close()
-
 	dnsPolicies := DNSPolicyResponse{}
-	err = json.Unmarshal(body, &dnsPolicies)
+	err := doGet(config, url, &dnsPolicies)
 	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+		return nil, err
 	}
 
 	if len(dnsPolicies.Embedded.DNSPolicies) < 1 {
@@ -1357,10 +1293,6 @@ func handleAsyncRequest(req *http.Request, config *Config, httpVerb string) (job
 		return jobStatus, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request %s %s %s", httpVerb, req.URL, body))
 	}
 
-	if err = checkForErrors(res); err != nil {
-		return nil, err
-	}
-
 	body, err := readResponse(res)
 	if err != nil {
 		body, _ := ioutil.ReadAll(req.Body)
@@ -1376,6 +1308,11 @@ func handleAsyncRequest(req *http.Request, config *Config, httpVerb string) (job
 	if err != nil {
 		return
 	}
+
+	if err = checkForJobErrors(jobStatus); err != nil {
+		return nil, err
+	}
+
 	return jobStatus, nil
 }
 
@@ -1509,7 +1446,7 @@ func checkForErrors(res *http.Response) error {
 
 func checkForJobErrors(jobStatus *JobStatus) error {
 	if jobStatus.JobState != JobSuccess {
-		return errors.New(fmt.Sprintf("Job %s (%d) failed with message %#v", jobStatus.JobType, jobStatus.ID, jobStatus.ErrorDetails.Errors))
+		return errors.New(fmt.Sprintf("Job %s (%d) failed with message %v", jobStatus.JobType, jobStatus.ID, *jobStatus.ErrorDetails.Errors))
 	}
 	return nil
 }
