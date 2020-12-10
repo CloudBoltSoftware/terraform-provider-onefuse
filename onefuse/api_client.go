@@ -823,9 +823,8 @@ func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReserva
 	setHeaders(req, config)
 
 	dnsRecord := DNSReservation{}
-	var jobStatus *JobStatus
 
-	jobStatus, err = handleAsyncRequestAndFetchManagdObject(req, config, &dnsRecord, "POST")
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &dnsRecord, "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -874,10 +873,8 @@ func (apiClient *OneFuseAPIClient) DeleteDNSReservation(id int) error {
 
 	setHeaders(req, config)
 
-	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
-		return err
-	}
-	return nil
+	_, err = handleAsyncRequest(req, config, "DELETE")
+	return err
 }
 
 //Create IPAM Reservation
@@ -931,29 +928,12 @@ func (apiClient *OneFuseAPIClient) CreateIPAMReservation(newIPAMRecord *IPAMRese
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
-
-	// Make the create request
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
-	}
-	defer res.Body.Close()
-
 	ipamRecord := IPAMReservation{}
-	if err = json.Unmarshal(body, &ipamRecord); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
-	}
 
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &ipamRecord, "POST")
+	if err != nil {
+		return nil, err
+	}
 	return &ipamRecord, nil
 }
 
@@ -966,35 +946,11 @@ func (apiClient *OneFuseAPIClient) GetIPAMReservation(id int) (*IPAMReservation,
 
 	url := itemURL(config, IPAMReservationResourceType, id)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s %s", url, err))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s %s", url, err))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s %s", url, err))
-	}
-	defer res.Body.Close()
-
 	ipamRecord := IPAMReservation{}
-	if err = json.Unmarshal(body, &ipamRecord); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	err := doGet(config, url, &ipamRecord)
+	if err != nil {
+		return nil, err
 	}
-
 	return &ipamRecord, err
 }
 
@@ -1020,14 +976,8 @@ func (apiClient *OneFuseAPIClient) DeleteIPAMReservation(id int) error {
 
 	setHeaders(req, config)
 
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request DELETE %s", url))
-	}
-
-	return checkForErrors(res)
+	_, err = handleAsyncRequest(req, config, "DELETE")
+	return err
 }
 
 // End IPAM
@@ -1045,34 +995,10 @@ func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy
 	config := apiClient.config
 	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, IPAMPolicyResourceType), name)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
-	}
-
-	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed GET %s", url))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
-	}
-	defer res.Body.Close()
-
 	ipamPolicies := IPAMPolicyResponse{}
-	err = json.Unmarshal(body, &ipamPolicies)
+	err := doGet(config, url, &ipamPolicies)
 	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+		return nil, err
 	}
 
 	if len(ipamPolicies.Embedded.IPAMPolicies) < 1 {
