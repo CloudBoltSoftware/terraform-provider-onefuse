@@ -279,7 +279,6 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, wor
 	log.Println("onefuse.apiClient: GenerateCustomName")
 
 	config := apiClient.config
-	url := collectionURL(config, NamingResourceType)
 
 	if templateProperties == nil {
 		templateProperties = make(map[string]interface{})
@@ -299,21 +298,11 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(namingPolicyID string, wor
 		"workspace":          fmt.Sprintf("/%s/%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID),
 	}
 
-	jsonBytes, err := json.Marshal(postBody)
-	if err != nil {
-		return nil, errors.WithMessage(err, "onefuse.apiClient: Unable to marshal request body to JSON")
+	var req *http.Request
+	var err error
+	if req, err = buildPostRequest(config, NamingResourceType, postBody); err != nil {
+		return nil, err
 	}
-
-	requestBody := string(jsonBytes)
-
-	payload := strings.NewReader(requestBody)
-
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
-	}
-
-	setHeaders(req, config)
 
 	customName := CustomName{}
 	var jobStatus *JobStatus
@@ -412,40 +401,28 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftA
 		return nil, err
 	}
 
-	// Construct a URL we are going to POST to
-	// /api/v3/onefuse/microsoftADPolicies/
-	url := collectionURL(config, MicrosoftADPolicyResourceType)
-
-	jsonBytes, err := json.Marshal(newPolicy)
-	if err != nil {
-		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	var req *http.Request
+	if req, err = buildPostRequest(config, MicrosoftADPolicyResourceType, newPolicy); err != nil {
+		return nil, err
 	}
-
-	requestBody := string(jsonBytes)
-	payload := strings.NewReader(requestBody)
-
-	// Create the create request
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
-	}
-
-	setHeaders(req, config)
 
 	client := getHttpClient(config)
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", url, requestBody))
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", req.URL, body))
 	}
 
 	if err = checkForErrors(res); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", url, requestBody))
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", req.URL, body))
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", url, requestBody))
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", req.URL, body))
 	}
 	defer res.Body.Close()
 
@@ -574,25 +551,10 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADComputerAccount(newComputerA
 		return nil, errors.New("onefuse.apiClient: Microsoft AD Computer Account Create requires a PolicyID or Policy URL")
 	}
 
-	// Construct a URL we are going to POST to
-	// /api/v3/onefuse/microsoftADComputerAccounts/
-	url := collectionURL(config, MicrosoftADComputerAccountResourceType)
-
-	jsonBytes, err := json.Marshal(newComputerAccount)
-	if err != nil {
-		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	var req *http.Request
+	if req, err = buildPostRequest(config, MicrosoftADComputerAccountResourceType, newComputerAccount); err != nil {
+		return nil, err
 	}
-
-	requestBody := string(jsonBytes)
-	payload := strings.NewReader(requestBody)
-
-	// Create the create request
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
-	}
-
-	setHeaders(req, config)
 
 	computerAccount := MicrosoftADComputerAccount{}
 	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &computerAccount, "POST")
@@ -667,25 +629,10 @@ func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReserva
 		return nil, errors.New("onefuse.apiClient: DNS Record Create requires a PolicyID or Policy URL")
 	}
 
-	// Construct a URL we are going to POST to
-	// /api/v3/onefuse/dnsReservations/
-	url := collectionURL(config, DNSReservationResourceType)
-
-	jsonBytes, err := json.Marshal(newDNSRecord)
-	if err != nil {
-		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	var req *http.Request
+	if req, err = buildPostRequest(config, DNSReservationResourceType, newDNSRecord); err != nil {
+		return nil, err
 	}
-
-	requestBody := string(jsonBytes)
-	payload := strings.NewReader(requestBody)
-
-	// Create the create request
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
-	}
-
-	setHeaders(req, config)
 
 	dnsRecord := DNSReservation{}
 
@@ -695,6 +642,27 @@ func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReserva
 	}
 
 	return &dnsRecord, nil
+}
+
+func buildPostRequest(config *Config, resourceType string, requestEntity interface{}) (*http.Request, error) {
+	url := collectionURL(config, resourceType)
+
+	jsonBytes, err := json.Marshal(requestEntity)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	return req, nil
 }
 
 //Get DNS Reservation
@@ -764,25 +732,10 @@ func (apiClient *OneFuseAPIClient) CreateIPAMReservation(newIPAMRecord *IPAMRese
 		return nil, errors.New("onefuse.apiClient: IPAM Record Create requires a PolicyID or Policy URL")
 	}
 
-	// Construct a URL we are going to POST to
-	// /api/v3/onefuse/ipamReservations/
-	url := collectionURL(config, IPAMReservationResourceType)
-
-	jsonBytes, err := json.Marshal(newIPAMRecord)
-	if err != nil {
-		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	var req *http.Request
+	if req, err = buildPostRequest(config, IPAMReservationResourceType, newIPAMRecord); err != nil {
+		return nil, err
 	}
-
-	requestBody := string(jsonBytes)
-	payload := strings.NewReader(requestBody)
-
-	// Create the create request
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
-	}
-
-	setHeaders(req, config)
 
 	ipamRecord := IPAMReservation{}
 
