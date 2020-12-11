@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -379,21 +380,14 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (*Mic
 	log.Println("onefuse.apiClient: GetMicrosoftEndpointByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s;type:microsoft", collectionURL(config, ModuleEndpointResourceType), name)
 
 	endpoints := EndpointsListResponse{}
-	err := doGet(config, url, &endpoints)
+	entity, err := findEntityByName(config, name, ModuleEndpointResourceType, &endpoints, "Endpoints", ";type:microsoft")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(endpoints.Embedded.Endpoints) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find Microsoft Endpoint '%s'!", name))
-	}
-
-	endpoint := endpoints.Embedded.Endpoints[0]
-
-	return &endpoint, err
+	endpoint := entity.(MicrosoftEndpoint)
+	return &endpoint, nil
 }
 
 func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (*MicrosoftEndpoint, error) {
@@ -413,18 +407,9 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftA
 
 	config := apiClient.config
 
-	// Default workspace if it was not provided
-	if newPolicy.WorkspaceURL == "" {
-		workspaceID, err := findDefaultWorkspaceID(config)
-		if err != nil {
-			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
-		}
-		workspaceIDInt, err := strconv.Atoi(workspaceID)
-		if err != nil {
-			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
-		}
-
-		newPolicy.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	var err error
+	if newPolicy.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newPolicy.WorkspaceURL); err != nil {
+		return nil, err
 	}
 
 	// Construct a URL we are going to POST to
@@ -479,34 +464,10 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftADPolicy(id int) (*MicrosoftADPol
 
 	url := itemURL(config, MicrosoftADPolicyResourceType, id)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request GET %s", url))
-	}
-
-	setHeaders(req, config)
-
-	client := getHttpClient(config)
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request GET %s", url))
-	}
-
-	err = checkForErrors(res)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Error from request GET %s %s", url, err))
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from GET %s", url))
-	}
-	defer res.Body.Close()
-
 	policy := MicrosoftADPolicy{}
-	if err = json.Unmarshal(body, &policy); err != nil {
-		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	err := doGet(config, url, &policy)
+	if err != nil {
+		return nil, err
 	}
 
 	return &policy, err
@@ -523,17 +484,9 @@ func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy
 		return nil, errors.New("onefuse.apiClient: Microsoft AD Policy Updates Require a Name")
 	}
 
-	if updatedPolicy.WorkspaceURL == "" {
-		workspaceID, err := findDefaultWorkspaceID(config)
-		if err != nil {
-			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
-		}
-		workspaceIDInt, err := strconv.Atoi(workspaceID)
-		if err != nil {
-			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
-		}
-
-		updatedPolicy.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	var err error
+	if updatedPolicy.WorkspaceURL, err = findWorkspaceURLOrDefault(config, updatedPolicy.WorkspaceURL); err != nil {
+		return nil, err
 	}
 
 	jsonBytes, err := json.Marshal(updatedPolicy)
@@ -606,18 +559,9 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADComputerAccount(newComputerA
 
 	config := apiClient.config
 
-	// Default workspace if it was not provided
-	if newComputerAccount.WorkspaceURL == "" {
-		workspaceID, err := findDefaultWorkspaceID(config)
-		if err != nil {
-			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
-		}
-		workspaceIDInt, err := strconv.Atoi(workspaceID)
-		if err != nil {
-			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
-		}
-
-		newComputerAccount.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	var err error
+	if newComputerAccount.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newComputerAccount.WorkspaceURL); err != nil {
+		return nil, err
 	}
 
 	if newComputerAccount.Policy == "" {
@@ -708,18 +652,9 @@ func (apiClient *OneFuseAPIClient) CreateDNSReservation(newDNSRecord *DNSReserva
 
 	config := apiClient.config
 
-	// Default workspace if it was not provided
-	if newDNSRecord.WorkspaceURL == "" {
-		workspaceID, err := findDefaultWorkspaceID(config)
-		if err != nil {
-			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
-		}
-		workspaceIDInt, err := strconv.Atoi(workspaceID)
-		if err != nil {
-			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
-		}
-
-		newDNSRecord.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	var err error
+	if newDNSRecord.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newDNSRecord.WorkspaceURL); err != nil {
+		return nil, err
 	}
 
 	if newDNSRecord.Policy == "" {
@@ -814,18 +749,9 @@ func (apiClient *OneFuseAPIClient) CreateIPAMReservation(newIPAMRecord *IPAMRese
 
 	config := apiClient.config
 
-	// Default workspace if it was not provided
-	if newIPAMRecord.WorkspaceURL == "" {
-		workspaceID, err := findDefaultWorkspaceID(config)
-		if err != nil {
-			return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
-		}
-		workspaceIDInt, err := strconv.Atoi(workspaceID)
-		if err != nil {
-			return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
-		}
-
-		newIPAMRecord.WorkspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	var err error
+	if newIPAMRecord.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newIPAMRecord.WorkspaceURL); err != nil {
+		return nil, err
 	}
 
 	if newIPAMRecord.Policy == "" {
@@ -923,21 +849,14 @@ func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy
 	log.Println("onefuse.apiClient: GetIPAMPolicyByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, IPAMPolicyResourceType), name)
 
 	ipamPolicies := IPAMPolicyResponse{}
-	err := doGet(config, url, &ipamPolicies)
+	entity, err := findEntityByName(config, name, IPAMPolicyResourceType, &ipamPolicies, "IPAMPolicies", "")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(ipamPolicies.Embedded.IPAMPolicies) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find IPAM Policy '%s'!", name))
-	}
-
-	ipamPolicy := ipamPolicies.Embedded.IPAMPolicies[0]
-
-	return &ipamPolicy, err
+	ipamPolicy := entity.(IPAMPolicy)
+	return &ipamPolicy, nil
 }
 
 // End IPAM Policies
@@ -953,21 +872,14 @@ func (apiClient *OneFuseAPIClient) GetNamingPolicyByName(name string) (*NamingPo
 	log.Println("onefuse.apiClient: GetNamingPolicyByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, NamingPolicyResourceType), name)
 
 	namingPolicies := NamingPolicyResponse{}
-	err := doGet(config, url, &namingPolicies)
+	entity, err := findEntityByName(config, name, NamingPolicyResourceType, &namingPolicies, "NamingPolicies", "")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(namingPolicies.Embedded.NamingPolicies) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find Naming Policy '%s'!", name))
-	}
-
-	namingPolicy := namingPolicies.Embedded.NamingPolicies[0]
-
-	return &namingPolicy, err
+	namingPolicy := entity.(NamingPolicy)
+	return &namingPolicy, nil
 }
 
 // End Naming Policies
@@ -983,21 +895,14 @@ func (apiClient *OneFuseAPIClient) GetADPolicyByName(name string) (*ADPolicy, er
 	log.Println("onefuse.apiClient: GetADPolicyByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, ADPolicyResourceType), name)
 
 	adPolicies := ADPolicyResponse{}
-	err := doGet(config, url, &adPolicies)
+	entity, err := findEntityByName(config, name, ADPolicyResourceType, &adPolicies, "ADPolicies", "")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(adPolicies.Embedded.ADPolicies) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
-	}
-
-	adPolicy := adPolicies.Embedded.ADPolicies[0]
-
-	return &adPolicy, err
+	adPolicy := entity.(ADPolicy)
+	return &adPolicy, nil
 }
 
 // End AD Policies
@@ -1013,21 +918,14 @@ func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, 
 	log.Println("onefuse.apiClient: GetDNSPolicyByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s", collectionURL(config, DNSPolicyResourceType), name)
 
 	dnsPolicies := DNSPolicyResponse{}
-	err := doGet(config, url, &dnsPolicies)
+	entity, err := findEntityByName(config, name, DNSPolicyResourceType, &dnsPolicies, "DNSPolicies", "")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(dnsPolicies.Embedded.DNSPolicies) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find AD Policy '%s'!", name))
-	}
-
-	dnsPolicy := dnsPolicies.Embedded.DNSPolicies[0]
-
-	return &dnsPolicy, err
+	dnsPolicy := entity.(DNSPolicy)
+	return &dnsPolicy, nil
 }
 
 // End DNS Policies
@@ -1043,21 +941,14 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 	log.Println("onefuse.apiClient: GetStaticPropertySetByName")
 
 	config := apiClient.config
-	url := fmt.Sprintf("%s?filter=name:%s;type:static", collectionURL(config, StaticPropertySetResourceType), name)
 
 	staticPropertySets := StaticPropertySetResponse{}
-	err := doGet(config, url, &staticPropertySets)
+	entity, err := findEntityByName(config, name, StaticPropertySetResourceType, &staticPropertySets, "PropertySets", ";type:static")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(staticPropertySets.Embedded.PropertySets) < 1 {
-		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find staticPropertySet '%s'!", name))
-	}
-
-	staticPropertySet := staticPropertySets.Embedded.PropertySets[0]
-
-	return &staticPropertySet, err
+	staticPropertySet := entity.(StaticPropertySet)
+	return &staticPropertySet, nil
 }
 
 // End Static Property Set
@@ -1171,10 +1062,27 @@ func waitForJob(jobID int, config *Config) (jobStatus *JobStatus, err error) {
 
 		time.Sleep(time.Duration(PollingIntervalMS) * time.Millisecond)
 		if time.Since(startTime) > (time.Duration(PollingTimeoutMS) * time.Millisecond) {
-			panic("Timed out while waiting for job to complete.")
+			return nil, errors.New("Timed out while waiting for job to complete.")
 		}
 	}
 	return jobStatus, nil
+}
+
+func findWorkspaceURLOrDefault(config *Config, workspaceURL string) (string, error) {
+	// Default workspace if it was not provided
+	if workspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return "", errors.WithMessage(err, "onefuse.apiClient: Failed to find default workspace")
+		}
+		workspaceIDInt, err := strconv.Atoi(workspaceID)
+		if err != nil {
+			return "", errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to convert Workspace ID '%s' to integer", workspaceID))
+		}
+
+		workspaceURL = itemURL(config, WorkspaceResourceType, workspaceIDInt)
+	}
+	return workspaceURL, nil
 }
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
@@ -1214,6 +1122,35 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	}
 	workspaceID = strconv.Itoa(workspaces[0].ID)
 	return
+}
+
+// Finds an entity on OneFuse of type "resourceType" with name "name", using the supplied "collectionResponse" interface
+// embeddedStructFieldName as the name of the embedded inner collection name.
+// Additional filters to the collection will be appened to the name filter in the URL.
+func findEntityByName(config *Config, name string, resourceType string, collectionResponse interface{},
+	embeddedStructFieldName string, additionalFilters string) (interface{}, error) {
+
+	url := fmt.Sprintf("%s?filter=name:%s%s", collectionURL(config, resourceType), name, additionalFilters)
+
+	err := doGet(config, url, &collectionResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Reflection logic below could likely use some better safeguards, but we can assume that OneFuse won't return a non-error Response
+	// that doesn't follow HAL+JSON's embedded structure.
+	embeddedField := reflect.Indirect(reflect.ValueOf(collectionResponse)).FieldByName("Embedded")
+	embedded := embeddedField.Interface()
+
+	collectionField := reflect.Indirect(reflect.ValueOf(embedded)).FieldByName(embeddedStructFieldName)
+
+	if collectionField.Len() < 1 {
+		return nil, errors.New(fmt.Sprintf("onefuse.apiClient: Could not find %s '%s'!", resourceType, name))
+	}
+
+	entity := collectionField.Index(0).Interface()
+
+	return entity, err
 }
 
 func getHttpClient(config *Config) *http.Client {
