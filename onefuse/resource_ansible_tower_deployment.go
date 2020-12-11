@@ -59,7 +59,8 @@ func bindAnsibleTowerDeploymentResource(d *schema.ResourceData, ansibleDeploymen
 	}
 
 	if err := d.Set("hosts", ansibleDeployment.Hosts); err != nil {
-		return errors.WithMessage(err, "Cannot set hosts: "+ansibleDeployment.Hosts)
+		hosts := strings.Join(ansibleDeployment.Hosts[:], ",")
+		return errors.WithMessage(err, "Cannot set hosts: "+hosts)
 	}
 
 	if err := d.Set("limit", ansibleDeployment.Limit); err != nil {
@@ -89,8 +90,8 @@ func resourceAnsibleTowerDeploymentCreate(d *schema.ResourceData, m interface{})
 	newAnsibleTowerDeployment := AnsibleTowerDeployment{
 		PolicyID:           d.Get("policy_id").(int),
 		WorkspaceURL:       d.Get("workspace_url").(string),
-		DNSSuffix:          d.Get("limit").(string),
 		Hosts:              hosts,
+		Limit:              d.Get("limit").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
@@ -125,6 +126,7 @@ func resourceAnsibleTowerDeploymentRead(d *schema.ResourceData, m interface{}) e
 func resourceAnsibleTowerDeploymentUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Println("onefuse.resourceAnsibleTowerDeploymentUpdate")
 	log.Println("No Op!")
+	return nil
 }
 
 func resourceAnsibleTowerDeploymentDelete(d *schema.ResourceData, m interface{}) error {

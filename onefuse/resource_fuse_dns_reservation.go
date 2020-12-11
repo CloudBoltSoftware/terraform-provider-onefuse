@@ -75,8 +75,6 @@ func bindDNSReservationResource(d *schema.ResourceData, dnsRecord *DNSReservatio
 	return nil
 }
 
-
-
 func resourceDNSReservationCreate(d *schema.ResourceData, m interface{}) error {
 	log.Println("onefuse.resourceDNSReservationCreate")
 
@@ -138,7 +136,6 @@ func resourceDNSReservationUpdate(d *schema.ResourceData, m interface{}) error {
 	if !changed {
 		return nil
 	}
-
 
 	var dnsZones []string
 	for _, group := range d.Get("zones").([]interface{}) {

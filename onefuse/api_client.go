@@ -24,6 +24,8 @@ import (
 
 const ApiVersion = "api/v3"
 const ApiNamespace = "onefuse"
+const AnsibleTowerDeploymentResourceType = "ansibleTowerDeployments"
+const AnsibleTowerPolicyResourceType = "ansibleTowerPolicies"
 const NamingResourceType = "customNames"
 const WorkspaceResourceType = "workspaces"
 const MicrosoftADPolicyResourceType = "microsoftADPolicies"
@@ -267,6 +269,34 @@ type JobStatus struct {
 			Message string `json:"message,omitempty"`
 		} `json:"errors,omitempty"`
 	} `json:errorDetails,omitempty"`
+}
+
+type AnsibleTowerDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                     int      `json:"id,omitempty"`
+	PolicyID               int      `json:"policyId,omitempty"`
+	Policy                 string   `json:"policy,omitempty"`
+	WorkspaceURL           string   `json:"workspace,omitempty"`
+	Limit                  string   `json:"limit,omitempty"`
+	InventoryName          string   `json:"inventoryName,omitempty"`
+	Hosts                  []string `json:"hosts,omitempty"`
+	Archived               bool     `json:"archived,omitempty"`
+	ProvisioningJobResults []struct {
+		output          string `json:"output"`
+		status          string `json:"status"`
+		jobTemplateName string `json:"jobTemplateName"`
+	} `json:"provisioningJobResults,omitempty"`
+	DeprovisioningJobResults []struct {
+		output          string `json:"output"`
+		status          string `json:"status"`
+		jobTemplateName string `json:"jobTemplateName"`
+	} `json:"deprovisioningJobResults,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
