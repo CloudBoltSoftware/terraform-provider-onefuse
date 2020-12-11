@@ -26,8 +26,7 @@ data "onefuse_ansible_tower_policy" "foo" {
 */
 
 resource "onefuse_ansible_tower_deployment" "bar" {
-  ansible_tower_policy_id = 1 // Refers to onefuse_ansible_tower_deployment data source to retrieve ID
-  // ansible_tower_policy_id = data.onefuse_ansible_tower_policy.id
+  policy_id = 1 // Refers to onefuse_ansible_tower_deployment data source to retrieve ID
   workspace_url = "" // Leave blank for default workspace
   limit = "..." // Ansible Tower Policy Limit
   hosts = [ "host1", "host2", ] // Hosts to run the policy against

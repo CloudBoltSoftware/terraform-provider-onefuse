@@ -821,10 +821,90 @@ func (apiClient *OneFuseAPIClient) DeleteIPAMReservation(id int) error {
 
 // End IPAM
 
+// Start Ansible Tower Deployment
+
+func (apiClient *OneFuseAPIClient) CreateAnsibleTowerDeployment(newAnsibleTowerDeployment *AnsibleTowerDeployment) (*AnsibleTowerDeployment, error) {
+	log.Println("onefuse.apiClient: CreateAnsibleTowerDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if newAnsibleTowerDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newAnsibleTowerDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if newAnsibleTowerDeployment.Policy == "" {
+		if newAnsibleTowerDeployment.PolicyID != 0 {
+			newAnsibleTowerDeployment.Policy = itemURL(config, WorkspaceResourceType, newAnsibleTowerDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: Ansible Tower Deployment Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: Ansible Tower Deployment Create requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, AnsibleTowerDeploymentResourceType, newAnsibleTowerDeployment); err != nil {
+		return nil, err
+	}
+
+	ansibleTowerDeployment := AnsibleTowerDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &ansibleTowerDeployment, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ansibleTowerDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetAnsibleTowerDeployment(id int) (*AnsibleTowerDeployment, error) {
+	log.Println("onefuse.apiClient: GetAnsibleTowerDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, AnsibleTowerDeploymentResourceType, id)
+
+	ansibleTowerDeployment := AnsibleTowerDeployment{}
+	err := doGet(config, url, &ansibleTowerDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &ansibleTowerDeployment, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateAnsibleTowerDeployment(id int, updatedAnsibleTowerDeployment *AnsibleTowerDeployment) (*AnsibleTowerDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateAnsibleTowerDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteAnsibleTowerDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteAnsibleTowerDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, AnsibleTowerDeploymentResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Start Ansible Tower Deployment
+
 // Start IPAM Policies
 
 func (apiClient *OneFuseAPIClient) GetIPAMPolicy(id int) (*IPAMPolicy, error) {
-	log.Println("onefuse.apiClient: IPAMPolicy")
+	log.Println("onefuse.apiClient: GetIPAMPolicy")
 	return nil, errors.New("onefuse.apiClient: Not implemented yet")
 }
 
@@ -936,6 +1016,8 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 
 // End Static Property Set
 
+// Start Jobs
+
 func GetJobStatus(id int, config *Config) (*JobStatus, error) {
 	log.Println("onefuse.apiClient: GetJobStatus")
 
@@ -949,6 +1031,8 @@ func GetJobStatus(id int, config *Config) (*JobStatus, error) {
 
 	return &result, nil
 }
+
+// End Jobs
 
 func handleAsyncRequestAndFetchManagdObject(req *http.Request, config *Config, responseObject interface{}, httpVerb string) (jobStatus *JobStatus, err error) {
 
