@@ -144,4 +144,3 @@ func resourceScriptingDeploymentDelete(d *schema.ResourceData, m interface{}) er
 
 	return config.NewOneFuseApiClient().DeleteScriptingDeployment(intID)
 }
-

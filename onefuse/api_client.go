@@ -39,6 +39,7 @@ const NamingPolicyResourceType = "namingPolicies"
 const ADPolicyResourceType = "microsoftADPolicies"
 const DNSPolicyResourceType = "dnsPolicies"
 const JobStatusResourceType = "jobStatus"
+const ScriptingDepoloymentResourceType = "scriptingDeployments"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -296,6 +297,30 @@ type AnsibleTowerDeployment struct {
 		Status          string `json:"status"`
 		JobTemplateName string `json:"jobTemplateName"`
 	} `json:"deprovisioningJobResults,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+}
+
+type ScriptingDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"workspace,omitempty"`
+		JobMetadata LinkRef `json:"workspace,omitempty"`
+	} `json:"_links, omitempty"`
+	ID                  int    `json:"id,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	Hostname            string `json:"hostname,omitempty"`
+	ProvisioningDetails *struct {
+		status string   `json:"status"`
+		output []string `json:"output"`
+	} `json:"provisioningDetails:omitempty"`
+	DeprovisioningDetails *struct {
+		status string   `json:"status"`
+		output []string `json:"output"`
+	} `json:"deprovisioningDetails:omitempty"`
+	Archived bool `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
 }
 
@@ -923,6 +948,31 @@ func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy
 }
 
 // End IPAM Policies
+
+// Start Scripting
+
+func (apiClient *OneFuseAPIClient) CreateScriptingDeployment(newScriptingDeployment *ScriptingDeployment) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: CreateScriptingDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetScriptingDeployment(id int) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: GetScriptingDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) UpdateScriptingDeployment(id int, desiredScriptingDeployment *ScriptingDeployment) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateScriptingDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteScriptingDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteScriptingDeployment")
+	return errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+// End Scripting
+
 
 // Start Naming Policies
 
