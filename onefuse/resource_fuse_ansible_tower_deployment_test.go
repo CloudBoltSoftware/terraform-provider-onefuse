@@ -7,6 +7,7 @@
 package onefuse
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -18,8 +19,8 @@ func createAnsibleTowerDeployment() (*AnsibleTowerDeployment, error) {
 
 	// Get raw user input from the environment
 	ansibleTowerPolicyID, _ := strconv.Atoi(getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_POLICY_ID", "1"))
-	ansibleTowerDeploymentTemplatePropertiesStr , _ := getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_TEMPLATE_PROPERTIES", "{}")
-	ansibleTowerDeploymentLimit, _ := strconv.Atoi(getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_LIMIT", ""))
+	ansibleTowerDeploymentTemplatePropertiesStr := getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_TEMPLATE_PROPERTIES", "{}")
+	ansibleTowerDeploymentLimit := getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_LIMIT", "")
 
 	// Parse string input into structures
 	var ansibleTowerDeploymentTemplateProperties map[string]interface{}
@@ -28,7 +29,7 @@ func createAnsibleTowerDeployment() (*AnsibleTowerDeployment, error) {
 	newAnsibleTowerDeployment := AnsibleTowerDeployment{
 		PolicyID:           ansibleTowerPolicyID,
 		TemplateProperties: ansibleTowerDeploymentTemplateProperties,
-		Limit: ansibleTowerDeploymentLimit,
+		Limit:              ansibleTowerDeploymentLimit,
 		// TODO: Support [Hosts] list too
 	}
 
@@ -118,4 +119,3 @@ func TestResourceAnsibleTowerDeploymentDelete(t *testing.T) {
 		return
 	}
 }
-

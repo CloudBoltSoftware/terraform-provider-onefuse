@@ -39,6 +39,7 @@ const NamingPolicyResourceType = "namingPolicies"
 const ADPolicyResourceType = "microsoftADPolicies"
 const DNSPolicyResourceType = "dnsPolicies"
 const JobStatusResourceType = "jobStatus"
+const ScriptingDepoloymentResourceType = "scriptingDeployments"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -126,7 +127,7 @@ type MicrosoftADComputerAccount struct {
 	PolicyID           int                    `json:"policyId,omitempty"`
 	Policy             string                 `json:"policy,omitempty"`
 	WorkspaceURL       string                 `json:"workspace,omitempty"`
-	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
 
 type DNSReservation struct {
@@ -143,7 +144,7 @@ type DNSReservation struct {
 	WorkspaceURL       string                 `json:"workspace,omitempty"`
 	Value              string                 `json:"value,omitempty"`
 	Zones              []string               `json:"zones,omitempty"`
-	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
 
 type IPAMReservation struct {
@@ -165,7 +166,7 @@ type IPAMReservation struct {
 	Network            string                 `json:"network,omitempty"`
 	DNSSuffix          string                 `json:"dnsSuffix,omitempty"`
 	Netmask            string                 `json:"netmask,omitempty"`
-	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties"`
 }
 
 type StaticPropertySetResponse struct {
@@ -296,7 +297,31 @@ type AnsibleTowerDeployment struct {
 		Status          string `json:"status"`
 		JobTemplateName string `json:"jobTemplateName"`
 	} `json:"deprovisioningJobResults,omitempty"`
-	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
+}
+
+type ScriptingDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links, omitempty"`
+	ID                  int    `json:"id,omitempty"`
+	PolicyID            int    `json:"policyId,omitempty"`
+	Policy              string `json:"policy,omitempty"`
+	WorkspaceURL        string `json:"workspace,omitempty"`
+	Hostname            string `json:"hostname,omitempty"`
+	ProvisioningDetails *struct {
+		status string   `json:"status"`
+		output []string `json:"output"`
+	} `json:"provisioningDetails:omitempty"`
+	DeprovisioningDetails *struct {
+		status string   `json:"status"`
+		output []string `json:"output"`
+	} `json:"deprovisioningDetails:omitempty"`
+	Archived           bool                   `json:"archived,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -924,6 +949,81 @@ func (apiClient *OneFuseAPIClient) GetIPAMPolicyByName(name string) (*IPAMPolicy
 
 // End IPAM Policies
 
+// Start Scripting
+
+func (apiClient *OneFuseAPIClient) CreateScriptingDeployment(newScriptingDeployment *ScriptingDeployment) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: CreateScriptingDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if newScriptingDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newScriptingDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if newScriptingDeployment.Policy == "" {
+		if newScriptingDeployment.PolicyID != 0 {
+			newScriptingDeployment.Policy = itemURL(config, WorkspaceResourceType, newScriptingDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: Scripting Deployment Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: Scripting Deployment Create requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, ScriptingDepoloymentResourceType, newScriptingDeployment); err != nil {
+		return nil, err
+	}
+
+	scriptingDeployment := ScriptingDeployment{}
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &scriptingDeployment, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	return &scriptingDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetScriptingDeployment(id int) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: GetScriptingDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ScriptingDepoloymentResourceType, id)
+	scriptingDeployment := ScriptingDeployment{}
+	err := doGet(config, url, &scriptingDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &scriptingDeployment, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateScriptingDeployment(id int, desiredScriptingDeployment *ScriptingDeployment) (*ScriptingDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateScriptingDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteScriptingDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteScriptingDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ScriptingDepoloymentResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	_, err = handleAsyncRequest(req, config, "DELETE")
+	return err
+}
+
+// End Scripting
+
 // Start Naming Policies
 
 func (apiClient *OneFuseAPIClient) GetNamingPolicy(id int) (*NamingPolicy, error) {
@@ -1115,8 +1215,8 @@ func doGet(config *Config, url string, v interface{}) (err error) {
 
 func waitForJob(jobID int, config *Config) (jobStatus *JobStatus, err error) {
 	jobStatusDescription := ""
-	PollingTimeoutMS := 60000
-	PollingIntervalMS := 2000
+	PollingTimeoutMS := 3600000
+	PollingIntervalMS := 5000
 	startTime := time.Now()
 	for jobStatusDescription != JobSuccess && jobStatusDescription != JobFailed {
 		jobStatus, err = GetJobStatus(jobID, config)

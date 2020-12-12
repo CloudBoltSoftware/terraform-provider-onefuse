@@ -3,7 +3,7 @@
 terraform {
   required_providers {
     onefuse = {
-      source  = "CloudBoltSoftware/onefuse"
+      source = "CloudBoltSoftware/onefuse"
       version = ">= 1.1.0"
     }
   }
@@ -11,7 +11,6 @@ terraform {
 }
 
 // Comment out above for Terraform 0.12
-
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
@@ -23,18 +22,10 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// DNS Policy data source
-//data "onefuse_dns_policy" "my_dns" {
-//  name = "infoblox851_dnspolicy"
-//}
-
-// DNS computer object resource
-resource "onefuse_dns_record" "my-dns-record" {
-    name = "hostname"
+// Onefuse Scripting Deployment
+resource "onefuse_scripting_deployment" "my-scripting-deployment" {
     policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace
-    zones = ["dnszone1,dnszone2"] // Comma seperated dns zones.  At least one zone required
-    value = "ipAddress" // IP Address
     template_properties = {
         property1        = "value1" // Your properties and values to pass into module
         proeprty2        = "value2"

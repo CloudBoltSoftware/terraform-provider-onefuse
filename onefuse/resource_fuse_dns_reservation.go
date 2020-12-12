@@ -10,6 +10,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -51,6 +52,10 @@ func resourceDNSReservation() *schema.Resource {
 				Optional: true,
 			},
 		},
+                Timeouts: &schema.ResourceTimeout{
+                        Create: schema.DefaultTimeout(5 * time.Minute),
+                        Delete: schema.DefaultTimeout(5 * time.Minute),
+                },
 	}
 }
 
