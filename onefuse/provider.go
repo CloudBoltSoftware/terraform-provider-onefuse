@@ -58,6 +58,7 @@ func Provider() *schema.Provider {
 			"onefuse_dns_record":                    resourceDNSReservation(),
 			"onefuse_ipam_record":                   resourceIPAMReservation(),
 			"onefuse_ansible_tower_deployment":      resourceAnsibleTowerDeployment(),
+			"onefuse_scripting_deployment":          resourceScriptingDeployment(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint":  dataSourceMicrosoftEndpoint(),
