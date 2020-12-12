@@ -1,3 +1,5 @@
+// Commented out for Terraform 0.12
+
 terraform {
   required_providers {
     onefuse = {
@@ -8,8 +10,10 @@ terraform {
   required_version = ">= 0.13"
 }
 
-provider "onefuse" {
+// Comment out above for Terraform 0.12
 
+// Inititalize OneFuse Provider
+provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
@@ -18,6 +22,7 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
+// Onefuse Scripting Deployment
 resource "onefuse_scripting_deployment" "my-scripting-deployment" {
     policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace

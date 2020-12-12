@@ -1,6 +1,6 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
       source  = "CloudBoltSoftware/onefuse"
@@ -15,7 +15,6 @@
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
@@ -31,7 +30,6 @@ data "onefuse_ipam_policy" "ipam_policy" {
 
 // IPAM reservation resource
 resource "onefuse_ipam_record" "my-ipam-record" {
-    
     hostname = "testname"
     policy_id = data.onefuse_ipam_policy.ipam_policy.id // Refers to onefuse_ipam_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace

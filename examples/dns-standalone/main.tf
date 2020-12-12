@@ -1,9 +1,9 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
-      source = "CloudBoltSoftware/onefuse"
+      source  = "CloudBoltSoftware/onefuse"
       version = ">= 1.1.0"
     }
   }
@@ -15,7 +15,6 @@
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
@@ -26,12 +25,11 @@ provider "onefuse" {
 
 // DNS Policy data source
 //data "onefuse_dns_policy" "my_dns" {
- // name = "infoblox851_dnspolicy"
+//  name = "infoblox851_dnspolicy"
 //}
 
 // DNS computer object resource
 resource "onefuse_dns_record" "my-dns-record" {
-    
     name = "hostname"
     policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace

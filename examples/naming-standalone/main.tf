@@ -15,7 +15,6 @@ terraform {
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"

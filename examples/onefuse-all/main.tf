@@ -1,6 +1,6 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
       source  = "CloudBoltSoftware/onefuse"
@@ -15,7 +15,6 @@
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
