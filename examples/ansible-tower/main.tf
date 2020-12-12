@@ -18,20 +18,17 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-/*
-// OneFuse Ansible Tower Policy
-data "onefuse_ansible_tower_policy" "foo" {
-  name = "my-ansible-tower-policy-name"
-}
-*/
-
 resource "onefuse_ansible_tower_deployment" "bar" {
-  policy_id = 1 // Refers to onefuse_ansible_tower_deployment data source to retrieve ID
+  policy_id = 1 // Refers to Ansible Tower Policy ID (integer)
   workspace_url = "" // Leave blank for default workspace
   limit = "..." // Ansible Tower Policy Limit
   hosts = [ "host1", "host2", ] // Hosts to run the policy against
   template_properties = {
         property1        = "value1" // Your properties and values to pass into module
         proeprty2        = "value2"
+  }
+  timeouts {
+    create = "12m"
+    delete = "3m"
   }
 }

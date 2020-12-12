@@ -15,7 +15,6 @@ terraform {
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
@@ -31,7 +30,6 @@ data "onefuse_ad_policy" "default" {
 
 // Ad computer object resource
 resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
-
   name          = "namehere"
   policy_id     = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
   workspace_url = ""                                // Leave blank for default workspace

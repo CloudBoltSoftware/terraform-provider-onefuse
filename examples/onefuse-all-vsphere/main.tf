@@ -1,9 +1,9 @@
 // Commented out for Terraform 0.12
 
- terraform {
+terraform {
   required_providers {
     onefuse = {
-      source = "CloudBoltSoftware/onefuse"
+      source  = "CloudBoltSoftware/onefuse"
       version = ">= 1.10.1"
     }
   }
@@ -15,7 +15,6 @@
 
 // Inititalize OneFuse Provider
 provider "onefuse" {
-
   scheme     = "https"
   address    = "onefuse_fqdn"
   port       = "port"
@@ -61,7 +60,6 @@ resource "onefuse_naming" "machine-name" {
 }
 
 resource "onefuse_microsoft_ad_computer_account" "dev" {
-    
     name = onefuse_naming.machine-name.name // Refers to onefuse_naming_policy for computer name
     policy_id = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace
@@ -73,7 +71,6 @@ resource "onefuse_microsoft_ad_computer_account" "dev" {
 }
 
 resource "onefuse_ipam_record" "my-ipam-record" {
-    
     hostname = onefuse_naming.machine-name.name  // Refers to onefuse_naming_resource for computer name
     policy_id = data.onefuse_ipam_policy.dev.id // Refers to onefuse_ipam_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace
@@ -85,7 +82,6 @@ resource "onefuse_ipam_record" "my-ipam-record" {
 }
 
 resource "onefuse_dns_record" "my-dns-record" {
-    
     name = onefuse_naming.machine-name.name // Refers to onefuse_naming resource for computer name
     policy_id = data.onefuse_dns_policy.dev.id // Refers to onefuse_dns_policy data source to retrieve ID
     workspace_url = "" // Leave blank for default workspace
