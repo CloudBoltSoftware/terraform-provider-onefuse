@@ -291,12 +291,12 @@ type AnsibleTowerDeployment struct {
 		status          string `json:"status"`
 		jobTemplateName string `json:"jobTemplateName"`
 	} `json:"provisioningJobResults,omitempty"`
-	DeprovisioningJobResults []struct {
+	DeprovisioningJobResults struct {
 		output          string `json:"output"`
 		status          string `json:"status"`
 		jobTemplateName string `json:"jobTemplateName"`
 	} `json:"deprovisioningJobResults,omitempty"`
-	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
