@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func createAnsibleTowerDeployment(name string) (*AnsibleTowerDeployment, error) {
+func createAnsibleTowerDeployment() (*AnsibleTowerDeployment, error) {
 	config := GetConfig()
 
 	// Get raw user input from the environment
@@ -63,7 +63,7 @@ func deleteAnsibleTowerDeployment(id int) error {
 }
 
 func TestResourceAnsibleTowerDeploymentCreate(t *testing.T) {
-	ansibleTowerDeployment, err := createAnsibleTowerDeployment("myAnsibleTowerDeployment")
+	ansibleTowerDeployment, err := createAnsibleTowerDeployment()
 	if err != nil {
 		t.Errorf("Error creating Ansible Tower Deployment: '%s'", err)
 		return
@@ -76,7 +76,7 @@ func TestResourceAnsibleTowerDeploymentCreate(t *testing.T) {
 }
 
 func TestResourceAnsibleTowerDeploymentGet(t *testing.T) {
-	ansibleTowerDeployment, err := createAnsibleTowerDeployment("myAnsibleTowerDeployment")
+	ansibleTowerDeployment, err := createAnsibleTowerDeployment()
 	if err != nil {
 		t.Errorf("Error creating Ansible Tower Deployment for read: '%s'", err)
 		return
@@ -107,7 +107,7 @@ func TestResourceAnsibleTowerDeploymentUpdate(t *testing.T) {
 }
 
 func TestResourceAnsibleTowerDeploymentDelete(t *testing.T) {
-	ansibleTowerDeployment, err := createAnsibleTowerDeployment("myAnsibleTowerDeployment")
+	ansibleTowerDeployment, err := createAnsibleTowerDeployment()
 	if err != nil {
 		t.Errorf("Error creating Ansible Tower Deployment for delete: '%s'", err)
 		return
