@@ -15,19 +15,34 @@ import (
 
 func createAnsibleTowerDeployment(name string) (*AnsibleTowerDeployment, error) {
 	config := GetConfig()
+
+	// Get raw user input from the environment
 	ansibleTowerPolicyID, _ := strconv.Atoi(getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_POLICY_ID", "1"))
+	ansibleTowerDeploymentTemplatePropertiesStr , _ := getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_TEMPLATE_PROPERTIES", "{}")
+	ansibleTowerDeploymentLimit, _ := strconv.Atoi(getEnv("CB_ONEFUSE_CFG_ANSIBLE_TOWER_DEPLOYMENT_LIMIT", ""))
+
+	// Parse string input into structures
+	var ansibleTowerDeploymentTemplateProperties map[string]interface{}
+	json.Unmarshal([]byte(ansibleTowerDeploymentTemplatePropertiesStr), &ansibleTowerDeploymentTemplateProperties)
+
 	newAnsibleTowerDeployment := AnsibleTowerDeployment{
 		PolicyID:           ansibleTowerPolicyID,
+		TemplateProperties: ansibleTowerDeploymentTemplateProperties,
+		Limit: ansibleTowerDeploymentLimit,
+		// TODO: Support [Hosts] list too
 	}
+
 	ansibleTowerDeployment, err := config.NewOneFuseApiClient().CreateAnsibleTowerDeployment(&newAnsibleTowerDeployment)
 	if err != nil {
 		return ansibleTowerDeployment, err
 	}
+
 	// Verify the create
 	verifyAnsibleTowerDeployment, err := config.NewOneFuseApiClient().GetAnsibleTowerDeployment(ansibleTowerDeployment.ID)
 	if verifyAnsibleTowerDeployment.ID == 0 {
 		err = errors.New("Error verifying created Ansible Tower Deployment")
 	}
+
 	return ansibleTowerDeployment, err
 }
 

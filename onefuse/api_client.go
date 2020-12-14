@@ -254,7 +254,7 @@ type JobStatus struct {
 	Links *struct {
 		Self          LinkRef `json:"self,omitempty"`
 		JobMetadata   LinkRef `json:"jobMetadata,omitempty"`
-		ManagedObject LinkRef `json:managedObject,omitempty"`
+		ManagedObject LinkRef `json:"managedObject,omitempty"`
 		Policy        LinkRef `json:"policy,omitempty"`
 		Workspace     LinkRef `json:"workspace,omitempty"`
 	} `json:"_links,omitempty"`
@@ -268,7 +268,7 @@ type JobStatus struct {
 		Errors *[]struct {
 			Message string `json:"message,omitempty"`
 		} `json:"errors,omitempty"`
-	} `json:errorDetails,omitempty"`
+	} `json:"errorDetails,omitempty"`
 }
 
 type AnsibleTowerDeployment struct {
@@ -287,14 +287,14 @@ type AnsibleTowerDeployment struct {
 	Hosts                  []string `json:"hosts,omitempty"`
 	Archived               bool     `json:"archived,omitempty"`
 	ProvisioningJobResults []struct {
-		output          string `json:"output"`
-		status          string `json:"status"`
-		jobTemplateName string `json:"jobTemplateName"`
+		Output          string `json:"output"`
+		Status          string `json:"status"`
+		JobTemplateName string `json:"jobTemplateName"`
 	} `json:"provisioningJobResults,omitempty"`
-	DeprovisioningJobResults struct {
-		output          string `json:"output"`
-		status          string `json:"status"`
-		jobTemplateName string `json:"jobTemplateName"`
+	DeprovisioningJobResults *struct {
+		Output          string `json:"output"`
+		Status          string `json:"status"`
+		JobTemplateName string `json:"jobTemplateName"`
 	} `json:"deprovisioningJobResults,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties,omitempty"`
 }
