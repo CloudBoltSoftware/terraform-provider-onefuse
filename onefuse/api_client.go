@@ -34,6 +34,7 @@ const ModuleEndpointResourceType = "endpoints"
 const DNSReservationResourceType = "dnsReservations"
 const IPAMReservationResourceType = "ipamReservations"
 const StaticPropertySetResourceType = "propertySets"
+const RenderTemplateType = "templateTester"
 const IPAMPolicyResourceType = "ipamPolicies"
 const NamingPolicyResourceType = "namingPolicies"
 const ADPolicyResourceType = "microsoftADPolicies"
@@ -188,6 +189,15 @@ type StaticPropertySet struct {
 	Description string                 `json:"description,omitempty"`
 	Properties  map[string]interface{} `json:"properties,omitempty"`
 	Raw         string
+}
+
+type RenderTemplateResponse struct {
+	Value string `json:"value,omitempty"`
+}
+
+type RenderTemplateRequest struct {
+	Template           string                 `json:"template,omitempty"`
+	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`
 }
 
 type IPAMPolicyResponse struct {
@@ -1262,6 +1272,58 @@ func findWorkspaceURLOrDefault(config *Config, workspaceURL string) (string, err
 	}
 	return workspaceURL, nil
 }
+
+// Start Render Template
+
+func (apiClient *OneFuseAPIClient) RenderTemplate(template string, templateProperties map[string]interface{}) (*RenderTemplateResponse, error) {
+	// this API endpoint is a POST, but only so we can pass in a body to be rendered by the templating engine
+	// it behaves mostly like a GET, and doesn't create an object, just returns the rendered value.
+	log.Println("onefuse.apiClient: RenderTemplate")
+
+	config := apiClient.config
+
+	requestBody := RenderTemplateRequest{
+		Template:           template,
+		TemplateProperties: templateProperties,
+	}
+
+	var err error
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, RenderTemplateType, requestBody); err != nil {
+		return nil, err
+	}
+
+	client := getHttpClient(config)
+
+	res, err := client.Do(req)
+	if err != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to do request POST %s %s", req.URL, body))
+	}
+
+	if err = checkForErrors(res); err != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Request failed POST %s %s", req.URL, body))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to read response body from POST %s %s", req.URL, body))
+	}
+	defer res.Body.Close()
+
+	renderTemplateResponse := RenderTemplateResponse{}
+	if err = json.Unmarshal(body, &renderTemplateResponse); err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to unmarshal response %s", string(body)))
+	}
+	renderedTemplate := renderTemplateResponse
+
+	return &renderedTemplate, nil
+}
+
+// End Render Template
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")

@@ -78,7 +78,7 @@ func resourceIPAMReservation() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
-			"nicLabel": {
+			"nic_label": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
