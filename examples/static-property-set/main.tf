@@ -24,9 +24,9 @@ provider "onefuse" {
 }
 
 // Static Property Set
-// We expect a Static Property Set called SPS01 with the following content:
+// We expect a Static Property Set called SPS01 with the following properties:
 // {
-//   "someKey": "someValue",
+//   "someKey": "{{templatedValue}}",
 //   "parent": {
 //     "someNestedKey": "someNestedValue"
 //   }
@@ -52,4 +52,14 @@ locals  {
 
 output "some_nested_value" {
   value = local.some_nested_value
+}
+
+// Render the template
+data "onefuse_rendered_template" "rendered_template" {
+    template = data.onefuse_static_property_set.sps01.raw
+    template_properties = {"templatedValue": "rendered_template"}
+}
+
+output "rendered_template" {
+  value = data.onefuse_rendered_template.rendered_template.value
 }
