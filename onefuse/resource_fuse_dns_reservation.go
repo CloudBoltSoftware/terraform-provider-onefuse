@@ -52,10 +52,10 @@ func resourceDNSReservation() *schema.Resource {
 				Optional: true,
 			},
 		},
-                Timeouts: &schema.ResourceTimeout{
-                        Create: schema.DefaultTimeout(5 * time.Minute),
-                        Delete: schema.DefaultTimeout(5 * time.Minute),
-                },
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(5 * time.Minute),
+			Delete: schema.DefaultTimeout(5 * time.Minute),
+		},
 	}
 }
 

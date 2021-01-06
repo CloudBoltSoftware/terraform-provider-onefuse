@@ -187,6 +187,7 @@ type StaticPropertySet struct {
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Properties  map[string]interface{} `json:"properties,omitempty"`
+	Raw         string
 }
 
 type IPAMPolicyResponse struct {
@@ -308,19 +309,19 @@ type ScriptingDeployment struct {
 		Workspace   LinkRef `json:"workspace,omitempty"`
 		Policy      LinkRef `json:"policy,omitempty"`
 		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
-	} `json:"_links, omitempty"`
+	} `json:"_links,omitempty"`
 	ID                  int    `json:"id,omitempty"`
 	PolicyID            int    `json:"policyId,omitempty"`
 	Policy              string `json:"policy,omitempty"`
 	WorkspaceURL        string `json:"workspace,omitempty"`
 	Hostname            string `json:"hostname,omitempty"`
 	ProvisioningDetails *struct {
-		status string   `json:"status"`
-		output []string `json:"output"`
+		Status string   `json:"status"`
+		Output []string `json:"output"`
 	} `json:"provisioningDetails:omitempty"`
 	DeprovisioningDetails *struct {
-		status string   `json:"status"`
-		output []string `json:"output"`
+		Status string   `json:"status"`
+		Output []string `json:"output"`
 	} `json:"deprovisioningDetails:omitempty"`
 	Archived           bool                   `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
@@ -1112,7 +1113,15 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 	if err != nil {
 		return nil, err
 	}
+
 	staticPropertySet := entity.(StaticPropertySet)
+
+	raw, err := json.Marshal(staticPropertySet.Properties)
+	if err != nil {
+		return nil, err
+	}
+	staticPropertySet.Raw = string(raw)
+
 	return &staticPropertySet, nil
 }
 
