@@ -38,6 +38,10 @@ func dataSourceStaticPropertySet() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
+			"raw": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -57,6 +61,7 @@ func dataSourceStaticPropertySetRead(d *schema.ResourceData, meta interface{}) e
 	d.SetId(strconv.Itoa(staticPropertySet.ID))
 	d.Set("name", staticPropertySet.Name)
 	d.Set("properties", staticPropertySet.Properties)
+	d.Set("raw", staticPropertySet.Raw)
 
 	return nil
 }
