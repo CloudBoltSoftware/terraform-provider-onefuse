@@ -17,5 +17,5 @@ jobs:
         -X POST \
         -H "Authorization: token ${{ secrets.REPO_DISPATCH_TOKEN }}" \
         -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/cloudboltsoftware/testautomation/dispatches \
+        https://api.github.com/repos/cloudboltsoftware/test-automation/dispatches \
         -d '{"event_type":"run_terraform_tests", "client_payload":{"ref":"${{ github.sha }}"}}'
