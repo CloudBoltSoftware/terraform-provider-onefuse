@@ -1,0 +1,21 @@
+name: Trigger OneFuse Terraform E2E Tests
+
+on:
+  push:
+    #branches: [ develop ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Trigger OneFuse Terraform E2E Tests
+      run: |
+        curl \
+        -X POST \
+        -H "Authorization: token ${{ secrets.REPO_DISPATCH_TOKEN }}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/cloudboltsoftware/testautomation/dispatches \
+        -d '{"event_type":"run_terraform_tests", "client_payload":{"ref":"${{ github.sha }}"}}'
