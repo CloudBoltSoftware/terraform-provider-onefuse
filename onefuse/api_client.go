@@ -39,6 +39,7 @@ const IPAMPolicyResourceType = "ipamPolicies"
 const NamingPolicyResourceType = "namingPolicies"
 const ADPolicyResourceType = "microsoftADPolicies"
 const DNSPolicyResourceType = "dnsPolicies"
+const ScriptingPolicyResourceType = "scriptingPolicies"
 const JobStatusResourceType = "jobStatus"
 const ScriptingDepoloymentResourceType = "scriptingDeployments"
 
@@ -335,6 +336,38 @@ type ScriptingDeployment struct {
 	} `json:"deprovisioningDetails,omitempty"`
 	Archived           bool                   `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
+}
+
+type ScriptingPolicyResponse struct {
+	Embedded struct {
+		ScriptingPolicies []ScriptingPolicy `json:"scriptingPolicies"`
+	} `json:"_embedded"`
+}
+
+type ScriptingPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type AnsibleTowerPolicyResponse struct {
+	Embedded struct {
+		AnsibleTowerPolicies []AnsibleTowerPolicy `json:"ansibleTowerPolicies"`
+	} `json:"_embedded"`
+}
+
+type AnsibleTowerPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -1105,6 +1138,54 @@ func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, 
 }
 
 // End DNS Policies
+
+// Start Scripting Policies
+
+func (apiClient *OneFuseAPIClient) GetScriptingPolicy(id int) (*ScriptingPolicy, error) {
+	log.Println("onefuse.apiClient: ScriptingPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetScriptingPolicyByName(name string) (*ScriptingPolicy, error) {
+	log.Println("onefuse.apiClient: GetScriptingPolicyByName")
+
+	config := apiClient.config
+
+	scriptingPolicies := ScriptingPolicyResponse{}
+	entity, err := findEntityByName(config, name, ScriptingPolicyResourceType, &scriptingPolicies, "ScriptingPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	scriptingPolicy := entity.(ScriptingPolicy)
+	return &scriptingPolicy, nil
+}
+
+// End Scripting Policies
+
+// Start Ansible Tower Policies
+
+func (apiClient *OneFuseAPIClient) GetAnsibleTowerPolicy(id int) (*AnsibleTowerPolicy, error) {
+	log.Println("onefuse.apiClient: AnsibleTowerPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetAnsibleTowerPolicyByName(name string) (*AnsibleTowerPolicy, error) {
+	log.Println("onefuse.apiClient: GetAnsibleTowerPolicyByName")
+
+	config := apiClient.config
+
+	ansibleTowerPolicies := AnsibleTowerPolicyResponse{}
+	entity, err := findEntityByName(config, name, AnsibleTowerPolicyResourceType, &ansibleTowerPolicies, "AnsibleTowerPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	ansibleTowerPolicy := entity.(AnsibleTowerPolicy)
+	return &ansibleTowerPolicy, nil
+}
+
+// End Ansible Tower Policies
+
+
 
 // Start Static Property Set
 
