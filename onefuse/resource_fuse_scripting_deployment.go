@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -23,6 +24,11 @@ func resourceScriptingDeployment() *schema.Resource {
 		Update: resourceScriptingDeploymentUpdate,
 		Delete: resourceScriptingDeploymentDelete,
 		Schema: map[string]*schema.Schema{
+			"hostname": {
+				Type:     schema.TypeString,
+				Required: false,
+				Computed: true,
+			},
 			"policy_id": {
 				Type:     schema.TypeInt,
 				Required: true,
@@ -35,6 +41,11 @@ func resourceScriptingDeployment() *schema.Resource {
 			"template_properties": {
 				Type:     schema.TypeMap,
 				Optional: true,
+			},
+			"provisioning_details": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
@@ -49,6 +60,20 @@ func bindScriptingDeploymentResource(d *schema.ResourceData, scriptingDeployment
 
 	if err := d.Set("workspace_url", scriptingDeployment.Links.Workspace.Href); err != nil {
 		return errors.WithMessage(err, "Cannot set workspace: "+scriptingDeployment.Links.Workspace.Href)
+	}
+
+	if err := d.Set("hostname", scriptingDeployment.Hostname); err != nil {
+		return errors.WithMessage(err, "Cannot set hostname: "+scriptingDeployment.Hostname)
+	}
+
+    provisioningDetailsJson, err := json.Marshal(scriptingDeployment.ProvisioningDetails)
+    if err != nil {
+    return errors.WithMessage(err, "Unable to Marshal provisioning_details into string")
+    }
+
+    provisioningDetailsString := string(provisioningDetailsJson)
+    if err := d.Set("provisioning_details", provisioningDetailsString); err != nil {
+		return errors.WithMessage(err, "Cannot set provisioning_details: "+provisioningDetailsString)
 	}
 
 	scriptingPolicyURLSplit := strings.Split(scriptingDeployment.Links.Policy.Href, "/")
