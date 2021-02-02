@@ -328,11 +328,11 @@ type ScriptingDeployment struct {
 	ProvisioningDetails *struct {
 		Status string   `json:"status"`
 		Output []string `json:"output"`
-	} `json:"provisioningDetails:omitempty"`
+	} `json:"provisioningDetails,omitempty"`
 	DeprovisioningDetails *struct {
 		Status string   `json:"status"`
 		Output []string `json:"output"`
-	} `json:"deprovisioningDetails:omitempty"`
+	} `json:"deprovisioningDetails,omitempty"`
 	Archived           bool                   `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
