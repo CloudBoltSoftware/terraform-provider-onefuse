@@ -41,6 +41,8 @@ const ADPolicyResourceType = "microsoftADPolicies"
 const DNSPolicyResourceType = "dnsPolicies"
 const JobStatusResourceType = "jobStatus"
 const ScriptingDepoloymentResourceType = "scriptingDeployments"
+const VraDeploymentResourceType = "vraDeployments"
+const VraPolicyResourceType = "vraPolicies"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -335,6 +337,28 @@ type ScriptingDeployment struct {
 	} `json:"deprovisioningDetails:omitempty"`
 	Archived           bool                   `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
+}
+
+// add outputs to this struct once deploy is done
+// like the provisioningdetails for scripting above
+type VraDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                 int                    `json:"id,omitempty"`
+	PolicyID           int                    `json:"policyId,omitempty"`
+	Policy             string                 `json:"policy,omitempty"`
+	WorkspaceURL       string                 `json:"workspace,omitempty"`
+	DeploymentName     string                 `json:"deploymentName,omitempty"`
+	Name               string                 `json:"name,omitempty"`
+	Archived           bool                   `json:"archived,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
+	DeploymentInfo     map[string]interface{} `json:"deploymentInfo,omitempty"`
+	BlueprintName      string                 `json:"blueprintName,omitempty"`
+	ProjectName        string                 `json:"projectName,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -937,7 +961,87 @@ func (apiClient *OneFuseAPIClient) DeleteAnsibleTowerDeployment(id int) error {
 	return nil
 }
 
-// Start Ansible Tower Deployment
+// End Ansible Tower Deployment
+
+// Start vRA Deployment
+
+func (apiClient *OneFuseAPIClient) CreateVraDeployment(newVraDeployment *VraDeployment) (*VraDeployment, error) {
+	log.Println("onefuse.apiClient: CreateVraDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if newVraDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newVraDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if newVraDeployment.Policy == "" {
+		if newVraDeployment.PolicyID != 0 {
+			newVraDeployment.Policy = itemURL(config, VraPolicyResourceType, newVraDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: vRA Deployment Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: vRA Deployment Create requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, VraDeploymentResourceType, newVraDeployment); err != nil {
+		return nil, err
+	}
+
+	vraDeployment := VraDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &vraDeployment, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	return &vraDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetVraDeployment(id int) (*VraDeployment, error) {
+	log.Println("onefuse.apiClient: GetVraDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, VraDeploymentResourceType, id)
+
+	vraDeployment := VraDeployment{}
+	err := doGet(config, url, &vraDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &vraDeployment, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateVraDeployment(id int, updatedVraDeployment *VraDeployment) (*VraDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateVraDeployment")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) DeleteVraDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteVraDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, VraDeploymentResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// End vRA Deployment
 
 // Start IPAM Policies
 
