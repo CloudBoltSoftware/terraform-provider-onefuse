@@ -146,7 +146,7 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 		return errors.WithMessage(err, "Cannot set Subnet: "+ipamRecord.Subnet)
 	}
 
-	if err := d.Set("nicLabel", ipamRecord.NicLabel); err != nil {
+	if err := d.Set("nic_label", ipamRecord.NicLabel); err != nil {
 		return errors.WithMessage(err, "Cannot set NicLabel: "+ipamRecord.NicLabel)
 	}
 	if err := d.Set("dns_suffix", ipamRecord.DNSSuffix); err != nil {
@@ -185,7 +185,7 @@ func resourceIPAMReservationCreate(d *schema.ResourceData, m interface{}) error 
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
-		NicLabel:           d.Get("nicLabel").(string),
+		NicLabel:           d.Get("nic_label").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
@@ -232,7 +232,7 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		d.HasChange("primary_dns") ||
 		d.HasChange("secondary_dns") ||
 		d.HasChange("dns_suffix") ||
-		d.HasChange("nicLabel") ||
+		d.HasChange("nic_label") ||
 		d.HasChange("template_properties")
 
 	if !changed {
@@ -261,7 +261,7 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
-		NicLabel:           d.Get("nicLabel").(string),
+		NicLabel:           d.Get("nic_label").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
 
