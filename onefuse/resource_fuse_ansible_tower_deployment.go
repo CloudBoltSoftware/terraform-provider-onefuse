@@ -7,11 +7,11 @@
 package onefuse
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -83,16 +83,16 @@ func bindAnsibleTowerDeploymentResource(d *schema.ResourceData, ansibleDeploymen
 		return errors.WithMessage(err, "Cannot set limit: "+ansibleDeployment.Limit)
 	}
 
-    if err := d.Set("inventory_name", ansibleDeployment.InventoryName); err != nil {
+	if err := d.Set("inventory_name", ansibleDeployment.InventoryName); err != nil {
 		return errors.WithMessage(err, "Cannot set inventory name: "+ansibleDeployment.InventoryName)
 	}
 
-    provisioningJobResultsJson, err := json.Marshal(ansibleDeployment.ProvisioningJobResults)
-    if err != nil {
-    return errors.WithMessage(err, "Unable to Marshal provisioning_job_results into string")
-    }
-    provisioningJobResultsString := string(provisioningJobResultsJson)
-    if err := d.Set("provisioning_job_results", provisioningJobResultsString); err != nil {
+	provisioningJobResultsJson, err := json.Marshal(ansibleDeployment.ProvisioningJobResults)
+	if err != nil {
+		return errors.WithMessage(err, "Unable to Marshal provisioning_job_results into string")
+	}
+	provisioningJobResultsString := string(provisioningJobResultsJson)
+	if err := d.Set("provisioning_job_results", provisioningJobResultsString); err != nil {
 		return errors.WithMessage(err, "Cannot set provisioning_job_results: "+provisioningJobResultsString)
 	}
 
