@@ -43,6 +43,7 @@ const JobStatusResourceType = "jobStatus"
 const ScriptingDepoloymentResourceType = "scriptingDeployments"
 const VraDeploymentResourceType = "vraDeployments"
 const VraPolicyResourceType = "vraPolicies"
+const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -257,6 +258,22 @@ type DNSPolicyResponse struct {
 }
 
 type DNSPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type ServicenowCMDBPolicyResponse struct {
+	Embedded struct {
+		ServicenowCMDBPolicies []ServicenowCMDBPolicy `json:"servicenowCMDBPolicies"`
+	} `json:"_embedded"`
+}
+
+type ServicenowCMDBPolicy struct {
 	Links *struct {
 		Self      LinkRef `json:"self,omitempty"`
 		Workspace LinkRef `json:"workspace,omitempty"`
@@ -1209,6 +1226,29 @@ func (apiClient *OneFuseAPIClient) GetDNSPolicyByName(name string) (*DNSPolicy, 
 }
 
 // End DNS Policies
+
+// Start ServicenowCMDB Policies
+
+func (apiClient *OneFuseAPIClient) GetServicenowCMDBPolicy(id int) (*ServicenowCMDBPolicy, error) {
+	log.Println("onefuse.apiClient: ServicenowCMDBPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetServicenowCMDBPolicyByName(name string) (*ServicenowCMDBPolicy, error) {
+	log.Println("onefuse.apiClient: GetServicenowCMDBPolicyByName")
+
+	config := apiClient.config
+
+	servicenowCMDBPolicies := ServicenowCMDBPolicyResponse{}
+	entity, err := findEntityByName(config, name, ServicenowCMDBPolicyResourceType, &servicenowCMDBPolicies, "ServicenowCMDBPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	servicenowCMDBPolicy := entity.(ServicenowCMDBPolicy)
+	return &servicenowCMDBPolicy, nil
+}
+
+// End ServicenowCMDB Policies
 
 // Start Static Property Set
 
