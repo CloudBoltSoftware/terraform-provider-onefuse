@@ -7,11 +7,11 @@
 package onefuse
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -66,13 +66,13 @@ func bindScriptingDeploymentResource(d *schema.ResourceData, scriptingDeployment
 		return errors.WithMessage(err, "Cannot set hostname: "+scriptingDeployment.Hostname)
 	}
 
-    provisioningDetailsJson, err := json.Marshal(scriptingDeployment.ProvisioningDetails)
-    if err != nil {
-    return errors.WithMessage(err, "Unable to Marshal provisioning_details into string")
-    }
+	provisioningDetailsJson, err := json.Marshal(scriptingDeployment.ProvisioningDetails)
+	if err != nil {
+		return errors.WithMessage(err, "Unable to Marshal provisioning_details into string")
+	}
 
-    provisioningDetailsString := string(provisioningDetailsJson)
-    if err := d.Set("provisioning_details", provisioningDetailsString); err != nil {
+	provisioningDetailsString := string(provisioningDetailsJson)
+	if err := d.Set("provisioning_details", provisioningDetailsString); err != nil {
 		return errors.WithMessage(err, "Cannot set provisioning_details: "+provisioningDetailsString)
 	}
 

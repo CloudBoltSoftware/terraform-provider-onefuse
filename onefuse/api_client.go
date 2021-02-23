@@ -1185,8 +1185,6 @@ func (apiClient *OneFuseAPIClient) GetAnsibleTowerPolicyByName(name string) (*An
 
 // End Ansible Tower Policies
 
-
-
 // Start Static Property Set
 
 func (apiClient *OneFuseAPIClient) GetStaticPropertySet(id int) (*StaticPropertySet, error) {
