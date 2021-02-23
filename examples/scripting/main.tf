@@ -16,16 +16,21 @@ terraform {
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
-  port       = "port"
+  port       = "443"
   user       = "admin"
   password   = "admin"
   verify_ssl = "false"
 }
 
+data "onefuse_scripting_policy" "my_policy" {
+  // name = "My Scripting Policy"
+  name = "myScriptingPolicy"
+}
+
 // Onefuse Scripting Deployment
 resource "onefuse_scripting_deployment" "my-scripting-deployment" {
-    policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
-    workspace_url = "" // Leave blank for default workspace
+    policy_id = data.onefuse_scripting_policy.my_policy.id
+    workspace_url = ""
     template_properties = {
         property1        = "value1" // Your properties and values to pass into module
         proeprty2        = "value2"
