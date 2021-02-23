@@ -27,6 +27,13 @@ func resourceIPAMReservation() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			// hostname could potentially be overridden using the hostname override on the policy,
+			// and therefore will no longer match the hostname given in the resource
+			// so we need a different variable for the computed hostname
+			"computed_hostname": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"policy_id": {
 				Type:     schema.TypeInt,
 				Required: true,
@@ -87,6 +94,7 @@ func resourceIPAMReservation() *schema.Resource {
 			"dns_suffix": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"dns_search_suffix": {
 				Type: schema.TypeList,
@@ -110,7 +118,7 @@ func resourceIPAMReservation() *schema.Resource {
 func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReservation) error {
 	log.Println("onefuse.bindIPAMReservationResource")
 
-	if err := d.Set("hostname", ipamRecord.Hostname); err != nil {
+	if err := d.Set("computed_hostname", ipamRecord.Hostname); err != nil {
 		return errors.WithMessage(err, "Cannot set name: "+ipamRecord.Hostname)
 	}
 
@@ -149,6 +157,7 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 	if err := d.Set("nic_label", ipamRecord.NicLabel); err != nil {
 		return errors.WithMessage(err, "Cannot set NicLabel: "+ipamRecord.NicLabel)
 	}
+
 	if err := d.Set("dns_suffix", ipamRecord.DNSSuffix); err != nil {
 		return errors.WithMessage(err, "Cannot set DNSSuffix: "+ipamRecord.DNSSuffix)
 	}
@@ -222,6 +231,7 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 
 	// Determine if a change is needed
 	changed := (d.HasChange("hostname") ||
+		d.HasChange("computed_hostname") ||
 		d.HasChange("policy_id") ||
 		d.HasChange("workspace_url")) ||
 		d.HasChange("ip_address") ||
