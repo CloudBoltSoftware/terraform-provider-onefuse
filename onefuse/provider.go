@@ -60,6 +60,7 @@ func Provider() *schema.Provider {
 			"onefuse_ansible_tower_deployment":      resourceAnsibleTowerDeployment(),
 			"onefuse_scripting_deployment":          resourceScriptingDeployment(),
 			"onefuse_vra_deployment":                resourceVraDeployment(),
+			"onefuse_servicenow_cmdb_deployment":    resourceServicenowCMDBDeployment(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint":     dataSourceMicrosoftEndpoint(),

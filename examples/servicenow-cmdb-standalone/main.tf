@@ -28,7 +28,22 @@ data "onefuse_servicenow_cmdb_policy" "servicenow_cmdb_policy" {
   name = "servicenow_cmdb_policy"
 }
 
+resource "onefuse_servicenow_cmdb_deployment" "my-servicenow-cmdb-deployment" {
+  policy_id        = data.onefuse_servicenow_cmdb_policy.servicenow_cmdb_policy.id // Refers to onefuse_servicenow_cmdb_policy data source to retrieve ID
+  workspace_url    = ""                                    // Leave blank for default workspace
+  template_properties = {
+    property1 = "value1" // Your properties and values to pass into module
+    proeprty2 = "value2"
+    property3 = "value3"
+  }
+}
+
 // Outputs
 output "policy-id" {
   value = data.onefuse_servicenow_cmdb_policy.servicenow_cmdb_policy.id
+}
+
+// Outputs
+output "servicenow-cmdb-response" {
+  value = onefuse_servicenow_cmdb_deployment.my-servicenow-cmdb-deployment
 }

@@ -44,6 +44,7 @@ const ScriptingDepoloymentResourceType = "scriptingDeployments"
 const VraDeploymentResourceType = "vraDeployments"
 const VraPolicyResourceType = "vraPolicies"
 const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
+const ServicenowCMDBDepoloymentResourceType = "servicenowDeployments"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -281,6 +282,48 @@ type ServicenowCMDBPolicy struct {
 	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
+}
+
+type ServicenowCMDBDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                     int    `json:"id,omitempty"`
+	PolicyID               int    `json:"policyId,omitempty"`
+	Policy                 string `json:"policy,omitempty"`
+	WorkspaceURL           string `json:"workspace,omitempty"`
+	ConfigurationItemsInfo []struct {
+		CiClassName string `json:"ciClassName,omitempty"`
+		CiName      string `json:"ciName,omitempty"`
+	} `json:"configurationItemsInfo,omitempty"`
+	ExecutionDetails struct {
+		LatestExecution struct {
+			Lifecycle string `json:"lifecycle,omitempty"`
+			Timestamp string `json:"timestamp,omitempty"`
+		} `json:"latestExecution,omitempty"`
+		Response struct {
+			Result struct {
+				Items []struct {
+					ClassName              string `json:"className,omitempty"`
+					Operation              string `json:"operation,omitempty"`
+					SysId                  string `json:"sysId,omitempty"`
+					IdentifierEntrySysId   string `json:"identifierEntrySysId,omitempty"`
+					IdentificationAttempts []struct {
+						IdentifierName          string   `json:"identifierName,omitempty"`
+						AttemptResult           string   `json:"attemptResult,omitempty"`
+						Attributes              []string `json:"attributes,omitempty"`
+						SearchOnTable           string   `json:"searchOnTable,omitempty"`
+						HybridEntryCiAttributes []string `json:"hybridEntryCiAttributes,omitempty"`
+					} `json:"identificationAttempts,omitempty"`
+				} `json:"items,omitempty"`
+			} `json:"result,omitempty"`
+		} `json:"response,omitempty"`
+	} `json:"executionDetails,omitempty"`
+	Archived           bool                   `json:"archived,omitempty"`
+	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
 
 type JobStatus struct {
@@ -1468,6 +1511,116 @@ func (apiClient *OneFuseAPIClient) RenderTemplate(template string, templatePrope
 }
 
 // End Render Template
+
+// Start ServiceNow CMDB Deployment
+
+func (apiClient *OneFuseAPIClient) CreateServicenowCMDBDeployment(newServicenowCMDBDeployment *ServicenowCMDBDeployment) (*ServicenowCMDBDeployment, error) {
+	log.Println("onefuse.apiClient: CreateServicenowCMDBDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if newServicenowCMDBDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newServicenowCMDBDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if newServicenowCMDBDeployment.Policy == "" {
+		if newServicenowCMDBDeployment.PolicyID != 0 {
+			newServicenowCMDBDeployment.Policy = itemURL(config, WorkspaceResourceType, newServicenowCMDBDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: ServiceNow CMDB Deployment Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: ServiceNow CMDB Deployment Create requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, ServicenowCMDBDepoloymentResourceType, newServicenowCMDBDeployment); err != nil {
+		return nil, err
+	}
+
+	servicenowCMDBDeployment := ServicenowCMDBDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &servicenowCMDBDeployment, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	return &servicenowCMDBDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetServicenowCMDBDeployment(id int) (*ServicenowCMDBDeployment, error) {
+	log.Println("onefuse.apiClient: GetServicenowCMDBDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ServicenowCMDBDepoloymentResourceType, id)
+
+	servicenowCMDBDeployment := ServicenowCMDBDeployment{}
+	err := doGet(config, url, &servicenowCMDBDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &servicenowCMDBDeployment, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateServicenowCMDBDeployment(id int, updatedServicenowCMDBDeployment *ServicenowCMDBDeployment) (*ServicenowCMDBDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateServicenowCMDBDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if updatedServicenowCMDBDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, updatedServicenowCMDBDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if updatedServicenowCMDBDeployment.Policy == "" {
+		if updatedServicenowCMDBDeployment.PolicyID != 0 {
+			updatedServicenowCMDBDeployment.Policy = itemURL(config, WorkspaceResourceType, updatedServicenowCMDBDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: ServiceNow CMDB Deployment Update requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: ServiceNow CMDB Deployment Update requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, ServicenowCMDBDepoloymentResourceType, updatedServicenowCMDBDeployment); err != nil {
+		return nil, err
+	}
+
+	servicenowCMDBDeployment := ServicenowCMDBDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &servicenowCMDBDeployment, "PUT")
+	if err != nil {
+		return nil, err
+	}
+
+	return &servicenowCMDBDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) DeleteServicenowCMDBDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteServicenowCMDBDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ServicenowCMDBDepoloymentResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// End ServiceNow CMDB Deployment
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")
