@@ -32,6 +32,14 @@ func resourceServicenowCMDBDeployment() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"configuration_items_info": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeMap,
+				},
+				Computed: true,
+				Optional: true,
+			},
 			"template_properties": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -49,6 +57,10 @@ func bindServicenowCMDBDeploymentResource(d *schema.ResourceData, servicenowCMDB
 
 	if err := d.Set("workspace_url", servicenowCMDBDeployment.Links.Workspace.Href); err != nil {
 		return errors.WithMessage(err, "Cannot set workspace: "+servicenowCMDBDeployment.Links.Workspace.Href)
+	}
+
+	if err := d.Set("configuration_items_info", servicenowCMDBDeployment.ConfigurationItemsInfo); err != nil {
+		return errors.WithMessage(err, "Cannot set configuration_items_info")
 	}
 
 	servicenowCMDBPolicyURLSplit := strings.Split(servicenowCMDBDeployment.Links.Policy.Href, "/")

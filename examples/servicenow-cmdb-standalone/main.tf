@@ -16,8 +16,8 @@ terraform {
 // Inititalize OneFuse Provider
 provider "onefuse" {
   scheme     = "https"
-  address    = "docker02.sovlabs.net"
-  port       = "8722"
+  address    = "onefuse_fqdn"
+  port       = "port"
   user       = "admin"
   password   = "admin"
   verify_ssl = "false"
@@ -30,7 +30,7 @@ data "onefuse_servicenow_cmdb_policy" "servicenow_cmdb_policy" {
 
 resource "onefuse_servicenow_cmdb_deployment" "my-servicenow-cmdb-deployment" {
   policy_id        = data.onefuse_servicenow_cmdb_policy.servicenow_cmdb_policy.id // Refers to onefuse_servicenow_cmdb_policy data source to retrieve ID
-  workspace_url    = ""                                    // Leave blank for default workspace
+  workspace_url    = "" // Leave blank for default workspace
   template_properties = {
     property1 = "value1" // Your properties and values to pass into module
     proeprty2 = "value2"

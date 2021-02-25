@@ -291,15 +291,12 @@ type ServicenowCMDBDeployment struct {
 		Policy      LinkRef `json:"policy,omitempty"`
 		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
 	} `json:"_links,omitempty"`
-	ID                     int    `json:"id,omitempty"`
-	PolicyID               int    `json:"policyId,omitempty"`
-	Policy                 string `json:"policy,omitempty"`
-	WorkspaceURL           string `json:"workspace,omitempty"`
-	ConfigurationItemsInfo []struct {
-		CiClassName string `json:"ciClassName,omitempty"`
-		CiName      string `json:"ciName,omitempty"`
-	} `json:"configurationItemsInfo,omitempty"`
-	ExecutionDetails struct {
+	ID                     int                      `json:"id,omitempty"`
+	PolicyID               int                      `json:"policyId,omitempty"`
+	Policy                 string                   `json:"policy,omitempty"`
+	WorkspaceURL           string                   `json:"workspace,omitempty"`
+	ConfigurationItemsInfo []map[string]interface{} `json:"configurationItemsInfo,omitempty"`
+	/*ExecutionDetails       struct {
 		LatestExecution struct {
 			Lifecycle string `json:"lifecycle,omitempty"`
 			Timestamp string `json:"timestamp,omitempty"`
@@ -321,7 +318,7 @@ type ServicenowCMDBDeployment struct {
 				} `json:"items,omitempty"`
 			} `json:"result,omitempty"`
 		} `json:"response,omitempty"`
-	} `json:"executionDetails,omitempty"`
+	} `json:"executionDetails,omitempty"`*/
 	Archived           bool                   `json:"archived,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
 }
@@ -810,6 +807,27 @@ func buildPostRequest(config *Config, resourceType string, requestEntity interfa
 	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
 		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request POST %s %s", url, requestBody))
+	}
+
+	setHeaders(req, config)
+
+	return req, nil
+}
+
+func buildPutRequest(config *Config, resourceType string, requestEntity interface{}, id int) (*http.Request, error) {
+	url := itemURL(config, resourceType, id)
+
+	jsonBytes, err := json.Marshal(requestEntity)
+	if err != nil {
+		return nil, errors.WithMessage(err, "onefuse.apiClient: Failed to marshal request body to JSON")
+	}
+
+	requestBody := string(jsonBytes)
+	payload := strings.NewReader(requestBody)
+
+	req, err := http.NewRequest("PUT", url, payload)
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Unable to create request PUT %s %s", url, requestBody))
 	}
 
 	setHeaders(req, config)
@@ -1585,7 +1603,7 @@ func (apiClient *OneFuseAPIClient) UpdateServicenowCMDBDeployment(id int, update
 	}
 
 	var req *http.Request
-	if req, err = buildPostRequest(config, ServicenowCMDBDepoloymentResourceType, updatedServicenowCMDBDeployment); err != nil {
+	if req, err = buildPutRequest(config, ServicenowCMDBDepoloymentResourceType, updatedServicenowCMDBDeployment, id); err != nil {
 		return nil, err
 	}
 
