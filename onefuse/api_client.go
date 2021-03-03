@@ -44,7 +44,7 @@ const ScriptingDepoloymentResourceType = "scriptingDeployments"
 const VraDeploymentResourceType = "vraDeployments"
 const VraPolicyResourceType = "vraPolicies"
 const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
-const ServicenowCMDBDepoloymentResourceType = "servicenowDeployments"
+const ServicenowCMDBDepoloymentResourceType = "servicenowCMDBDeployments"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
