@@ -64,3 +64,7 @@ output "primary_dns" {
 output "secondary_dns" {
   value = onefuse_ipam_record.my-ipam-record.secondary_dns
 }
+
+output "nic_label" {
+  value = onefuse_ipam_record.my-ipam-record.nic_label
+}
