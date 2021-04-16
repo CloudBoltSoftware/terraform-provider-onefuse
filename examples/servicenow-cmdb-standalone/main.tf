@@ -33,7 +33,7 @@ resource "onefuse_servicenow_cmdb_deployment" "my-servicenow-cmdb-deployment" {
   workspace_url    = "" // Leave blank for default workspace
   template_properties = {
     property1 = "value1" // Your properties and values to pass into module
-    proeprty2 = "value2"
+    property2 = "value2"
     property3 = "value3"
   }
 }

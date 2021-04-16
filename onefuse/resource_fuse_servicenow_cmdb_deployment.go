@@ -7,6 +7,7 @@
 package onefuse
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -40,6 +41,11 @@ func resourceServicenowCMDBDeployment() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"execution_details": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
 			"template_properties": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -61,6 +67,16 @@ func bindServicenowCMDBDeploymentResource(d *schema.ResourceData, servicenowCMDB
 
 	if err := d.Set("configuration_items_info", servicenowCMDBDeployment.ConfigurationItemsInfo); err != nil {
 		return errors.WithMessage(err, "Cannot set configuration_items_info")
+	}
+	
+	executionDetailsJSON, err := json.Marshal(servicenowCMDBDeployment.ExecutionDetails)
+	if err != nil {
+		return errors.WithMessage(err, "Unable to Marshal execution_details into string")
+	}
+	executionDetailsString := string(executionDetailsJSON)
+
+	if err := d.Set("execution_details", executionDetailsString); err != nil {
+		return errors.WithMessage(err, "Cannot set execution_details")
 	}
 
 	servicenowCMDBPolicyURLSplit := strings.Split(servicenowCMDBDeployment.Links.Policy.Href, "/")

@@ -296,31 +296,9 @@ type ServicenowCMDBDeployment struct {
 	Policy                 string                   `json:"policy,omitempty"`
 	WorkspaceURL           string                   `json:"workspace,omitempty"`
 	ConfigurationItemsInfo []map[string]interface{} `json:"configurationItemsInfo,omitempty"`
-	/*ExecutionDetails       struct {
-		LatestExecution struct {
-			Lifecycle string `json:"lifecycle,omitempty"`
-			Timestamp string `json:"timestamp,omitempty"`
-		} `json:"latestExecution,omitempty"`
-		Response struct {
-			Result struct {
-				Items []struct {
-					ClassName              string `json:"className,omitempty"`
-					Operation              string `json:"operation,omitempty"`
-					SysId                  string `json:"sysId,omitempty"`
-					IdentifierEntrySysId   string `json:"identifierEntrySysId,omitempty"`
-					IdentificationAttempts []struct {
-						IdentifierName          string   `json:"identifierName,omitempty"`
-						AttemptResult           string   `json:"attemptResult,omitempty"`
-						Attributes              []string `json:"attributes,omitempty"`
-						SearchOnTable           string   `json:"searchOnTable,omitempty"`
-						HybridEntryCiAttributes []string `json:"hybridEntryCiAttributes,omitempty"`
-					} `json:"identificationAttempts,omitempty"`
-				} `json:"items,omitempty"`
-			} `json:"result,omitempty"`
-		} `json:"response,omitempty"`
-	} `json:"executionDetails,omitempty"`*/
-	Archived           bool                   `json:"archived,omitempty"`
-	TemplateProperties map[string]interface{} `json:"templateProperties"`
+	ExecutionDetails	   map[string]interface{}   `json:"executionDetails,omitempty"`
+	Archived           	   bool                     `json:"archived,omitempty"`
+	TemplateProperties     map[string]interface{}   `json:"templateProperties"`
 }
 
 type JobStatus struct {
