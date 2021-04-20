@@ -1,5 +1,4 @@
-// Commented out for Terraform 0.12
-
+// Comment out for Terraform 0.12
 terraform {
   required_providers {
     onefuse = {
@@ -9,11 +8,10 @@ terraform {
   }
   required_version = ">= 0.13"
 }
-
 // Comment out above for Terraform 0.12
 
 
-// Inititalize OneFuse Provider
+// Initialize OneFuse Provider
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
@@ -23,17 +21,17 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// Static Property Set
+// Static Property Set (SPS)
 // We expect a Static Property Set called SPS01 with the following properties:
 // {
-//   "someKey": "{{templatedValue}}",
+//   "someKey": "{{ templatedValue }}",
 //   "parent": {
 //     "someNestedKey": "someNestedValue"
 //   }
 // }
 //
 data "onefuse_static_property_set" "sps01" {
-    name = "SPS01"
+  name = "SPS01"
 }
 
 // Only top-level key:value (string:string) pairs
@@ -56,10 +54,15 @@ output "some_nested_value" {
 
 // Render the template
 data "onefuse_rendered_template" "rendered_template" {
-    template = data.onefuse_static_property_set.sps01.raw
-    template_properties = {"templatedValue": "rendered_template"}
+  template = data.onefuse_static_property_set.sps01.raw
+  template_properties = {                 // Your properties and its values to pass to Static Property Set
+    property1 = "value1"
+    property2 = "value2"
+    property3 = "value3"
+  }
 }
 
+// Output
 output "rendered_template" {
   value = data.onefuse_rendered_template.rendered_template.value
 }

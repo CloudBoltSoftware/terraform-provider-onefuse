@@ -1,5 +1,4 @@
-// Commented out for Terraform 0.12
-
+// Comment out for Terraform 0.12
 terraform {
   required_providers {
     onefuse = {
@@ -9,11 +8,10 @@ terraform {
   }
   required_version = ">= 0.13"
 }
-
 // Comment out above for Terraform 0.12
 
 
-// Inititalize OneFuse Provider
+// Initialize OneFuse Provider
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
@@ -23,21 +21,21 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// DNS Policy data source
-//data "onefuse_dns_policy" "my_dns" {
-//  name = "infoblox851_dnspolicy"
-//}
+// Policy Data Source: DNS
+data "onefuse_dns_policy" "default" {
+  name = "default"
+}
 
-// DNS computer object resource
+// DNS Record Object Resource
 resource "onefuse_dns_record" "my-dns-record" {
-    name = "hostname"
-    policy_id = 1 //data.onefuse_dns_policy.my_dns.id // Refers to onefuse_dns_policy data source to retrieve ID
-    workspace_url = "" // Leave blank for default workspace
-    zones = ["dnszone1,dnszone2"] // Comma seperated dns zones.  At least one zone required
-    value = "ipAddress" // IP Address
-    template_properties = {
-        property1        = "value1" // Your properties and values to pass into module
-        proeprty2        = "value2"
-        property3        = "value3"
+  name          = "hostname"
+  policy_id     = data.onefuse_dns_policy.default.id // Refers to onefuse_dns_policy data source to retrieve ID
+  workspace_url = ""                                 // Leave blank for default workspace
+  zones         = ["dnszone1,dnszone2"]              // Comma separated DNS Zones.  At least one zone required
+  value         = "ipAddress"                        // IP Address
+  template_properties = {                            // Your properties and its values to pass into module
+    property1 = "value1"
+    property2 = "value2"
+    property3 = "value3"
   }
 }
