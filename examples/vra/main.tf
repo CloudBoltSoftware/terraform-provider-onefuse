@@ -1,3 +1,4 @@
+// Comment out for Terraform 0.12
 terraform {
   required_providers {
     onefuse = {
@@ -7,24 +8,28 @@ terraform {
   }
   required_version = ">= 0.13"
 }
+// Comment out above for Terraform 0.12
 
-// Inititalize OneFuse Provider
+
+// Initialize OneFuse Provider
 provider "onefuse" {
-  scheme     = "http"
-  address    = "localhost"
-  port       = "8000"
+  scheme     = "https"
+  address    = "onefuse_fqdn"
+  port       = "port"
   user       = "admin"
   password   = "admin"
   verify_ssl = "false"
 }
 
+// vRealize Automation Deployment Resource
 resource "onefuse_vra_deployment" "vra_deployment_01" {
-  policy_id = 1 // assumes you have a VRA policy with this ID
-  workspace_url = "" // Leave blank for default workspace
-  deployment_name = "tf_vra_deployment" // VRA Deployment Name
-  template_properties = {
-        property1        = "value1" // Your properties and values to pass into module
-        property2        = "value2"
+  policy_id       = 1                               // Refers to vRealize Automation Policy ID (integer)
+  workspace_url   = ""                              // Leave blank for default workspace
+  deployment_name = "tf_vra_deployment"             // vRA Deployment Name
+  template_properties = {                           // Your properties and its values to pass into module
+    property1 = "value1"
+    property2 = "value2"
+    property3 = "value3"
   }
   timeouts {
     create = "12m"
@@ -32,6 +37,7 @@ resource "onefuse_vra_deployment" "vra_deployment_01" {
   }
 }
 
+// Output
 output "deployment_info" {
   value = onefuse_vra_deployment.vra_deployment_01.deployment_info
 }

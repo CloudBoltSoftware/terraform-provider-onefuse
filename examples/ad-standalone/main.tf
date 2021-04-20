@@ -1,5 +1,4 @@
-// Commented out for Terraform 0.12
-
+// Comment out for Terraform 0.12
 terraform {
   required_providers {
     onefuse = {
@@ -9,11 +8,10 @@ terraform {
   }
   required_version = ">= 0.13"
 }
-
 // Comment out above for Terraform 0.12
 
 
-// Inititalize OneFuse Provider
+// Initialize OneFuse Provider
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
@@ -23,19 +21,19 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// AD Policy data source
+// Policy Data Source: Active Directory
 data "onefuse_ad_policy" "default" {
   name = "default"
 }
 
-// Ad computer object resource
+// AD Computer Object Resource
 resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
-  name          = "namehere"
+  name          = "myhostname"
   policy_id     = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
   workspace_url = ""                                // Leave blank for default workspace
-  template_properties = {
-    property1 = "value1" // Your properties and values to pass into module
-    proeprty2 = "value2"
+  template_properties = {                           // Your properties and its values to pass into module
+    property1 = "value1"
+    property2 = "value2"
     property3 = "value3"
   }
 }
