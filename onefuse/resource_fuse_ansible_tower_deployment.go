@@ -7,6 +7,7 @@
 package onefuse
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -48,6 +49,16 @@ func resourceAnsibleTowerDeployment() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 			},
+			"inventory_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"provisioning_job_results": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
@@ -70,6 +81,19 @@ func bindAnsibleTowerDeploymentResource(d *schema.ResourceData, ansibleDeploymen
 
 	if err := d.Set("limit", ansibleDeployment.Limit); err != nil {
 		return errors.WithMessage(err, "Cannot set limit: "+ansibleDeployment.Limit)
+	}
+
+	if err := d.Set("inventory_name", ansibleDeployment.InventoryName); err != nil {
+		return errors.WithMessage(err, "Cannot set inventory name: "+ansibleDeployment.InventoryName)
+	}
+
+	provisioningJobResultsJson, err := json.Marshal(ansibleDeployment.ProvisioningJobResults)
+	if err != nil {
+		return errors.WithMessage(err, "Unable to Marshal provisioning_job_results into string")
+	}
+	provisioningJobResultsString := string(provisioningJobResultsJson)
+	if err := d.Set("provisioning_job_results", provisioningJobResultsString); err != nil {
+		return errors.WithMessage(err, "Cannot set provisioning_job_results: "+provisioningJobResultsString)
 	}
 
 	ansibleTowerPolicyURLSplit := strings.Split(ansibleDeployment.Links.Policy.Href, "/")

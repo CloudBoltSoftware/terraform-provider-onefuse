@@ -39,6 +39,9 @@ resource "onefuse_ipam_record" "my-ipam-record" {
 }
 
 // Outputs
+output "hostname" {
+  value = onefuse_ipam_record.my-ipam-record.computed_hostname
+}
 output "ip_address" {
   value = onefuse_ipam_record.my-ipam-record.ip_address
 }

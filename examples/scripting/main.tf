@@ -15,19 +15,24 @@ terraform {
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
-  port       = "port"
+  port       = "443"
   user       = "admin"
   password   = "admin"
   verify_ssl = "false"
 }
 
-// Scripting Deployment Object Resource
+data "onefuse_scripting_policy" "my_policy" {
+  // name = "My Scripting Policy"
+  name = "myScriptingPolicy"
+}
+
+// Onefuse Scripting Deployment
 resource "onefuse_scripting_deployment" "my-scripting-deployment" {
-  policy_id     = 1                       // Refers to Scripting Policy ID (integer)
-  workspace_url = ""                      // Leave blank for default workspace
-  template_properties = {                 // Your properties and its values to pass into module
-    property1 = "value1"
-    property2 = "value2"
-    property3 = "value3"
+    policy_id = data.onefuse_scripting_policy.my_policy.id
+    workspace_url = ""
+    template_properties = {
+        property1        = "value1" // Your properties and values to pass into module
+        property2        = "value2"
+        property3        = "value3"
   }
 }
