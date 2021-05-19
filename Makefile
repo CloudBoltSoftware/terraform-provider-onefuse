@@ -1,3 +1,5 @@
+# IMPORTANT: ⚠️ Requires gmake >= 4.0 ⚠️
+
 PKGNAME := onefuse
 PLUGIN_EXECUTABLE := terraform-provider-$(PKGNAME)
 VERSION := $(file < VERSION)  # `file` may be a Make 4.3+ feature
@@ -6,18 +8,28 @@ ifeq ($(OS),Windows_NT)
 else
 	PLUGIN_RELEASE_EXECUTABLE := $(strip $(PLUGIN_EXECUTABLE)_v$(VERSION))
 endif
-TF_PLUGINS_DIR := $$HOME/.terraform.d/plugins
+VERSION_NUM := $(firstword $(subst -, ,$(VERSION)))
+HOSTOS := $$(go env GOHOSTOS)
+HOSTARCH := $$(go env GOHOSTARCH)
+PLUGIN_RELEASE_EXECUTABLE := $(PLUGIN_EXECUTABLE)_v$(VERSION)
+TF_PLUGINS_DIR_0.12 := $(HOME)/.terraform.d/plugins/$(HOSTOS)_$(HOSTARCH)# TODO: Drop support for TF 0.12
+TF_PLUGINS_DIR := $(HOME)/.terraform.d/plugins/registry.terraform.io/CloudBoltSoftware/$(PKGNAME)/$(VERSION_NUM)/$(HOSTOS)_$(HOSTARCH)
+
+GOFMT_FILES?=$$(find . -name '*.go' -not -path './vendor/*' -not -path './go/*')
 
 default: build
 
 # Build the plugin
-install:
+build: fmtcheck
 	go install
+	go build -o $(PLUGIN_EXECUTABLE)
 
-# Build the provider and copy it to your local terraform plugins directory for local integratin testing
-build: install
-	go build -o $(PLUGIN_RELEASE_EXECUTABLE)
-	echo Move $(PLUGIN_RELEASE_EXECUTABLE) to $(TF_PLUGINS_DIR)
+install: build
+	mkdir -p $(TF_PLUGINS_DIR)
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR)
+	# Terraform 0.12 compatability
+	mkdir -p $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
+	cp -f $(PLUGIN_EXECUTABLE) $(TF_PLUGINS_DIR_0.12) # TODO: Drop support for TF 0.12
 
 # Format code
 fmt:
@@ -42,5 +54,9 @@ release: release-darwin release-linux release-windows
 
 clean:
 	@rm -rf release/*
+
+# Live API tests
+testacc:
+	cd onefuse ; source config.env ; go test
 
 .PHONY : build clean install fmt fmtcheck

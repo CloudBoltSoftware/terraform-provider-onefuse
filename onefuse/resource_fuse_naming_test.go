@@ -7,21 +7,26 @@
 package onefuse
 
 import (
-	"log"
-	"strconv"
+	"os"
 	"testing"
 )
 
 func TestGenerateCustomName(t *testing.T) {
 	config := GetConfig()
-	cn := config.NewFuseApiClient().GenerateCustomName("2", "", nil)
-	log.Println(strconv.Itoa(cn.Id) + ": " + cn.Name + "." + cn.DnsSuffix + " version:" + strconv.Itoa(cn.Version))
+	cn, err := config.NewOneFuseApiClient().GenerateCustomName(getEnv("CB_ONEFUSE_CFG_NAMING_POLICY_ID", "1"), "", nil)
+	if err != nil {
+		t.Errorf("generate custom name error '%s'", err)
+		return
+	}
 	if cn.Id <= 0 {
 		t.Errorf("customName.Id=%d; want > 0", cn.Id)
 	}
-	if cn.DnsSuffix != "sovlabs.net" {
-		t.Errorf("customName.DnsSuffix=%s; want sovlabs.net", cn.DnsSuffix)
-	}
+	// TODO: this assertion is only true if the NamingPolicy has its dnsSuffix set to "sovlabs.net". The
+	//       value being passed into GenerateCustomName is not being used anywhere.
+	//
+	// if cn.DnsSuffix != "sovlabs.net" {
+	// 	t.Errorf("customName.DnsSuffix=%s; want sovlabs.net", cn.DnsSuffix)
+	// }
 	if cn.Name == "" {
 		t.Errorf("customName.Name=%s; want non-empty string", cn.Name)
 	}
@@ -29,8 +34,16 @@ func TestGenerateCustomName(t *testing.T) {
 
 func TestGetCustomName(t *testing.T) {
 	config := GetConfig()
-	cn1, _ := config.NewFuseApiClient().GenerateCustomName("sovlabs.net", "2", "", nil)
-	cn2 := config.NewFuseApiClient().GetCustomName(cn1.Id)
+	cn1, err := config.NewOneFuseApiClient().GenerateCustomName(getEnv("CB_ONEFUSE_CFG_NAMING_POLICY_ID", "1"), "", nil)
+	if err != nil {
+		t.Errorf("generate custom name error '%s'", err)
+		return
+	}
+	cn2, err := config.NewOneFuseApiClient().GetCustomName(cn1.Id)
+	if err != nil {
+		t.Errorf("get custom name error '%s'", err)
+		return
+	}
 	if cn1.Id != cn2.Id {
 		t.Error("Reserved customName.Id does not match after retrieval")
 	}
@@ -45,11 +58,18 @@ func TestGetCustomName(t *testing.T) {
 
 func GetConfig() Config {
 	config := Config{
-		scheme:   "http",
-		address:  "localhost",
-		port:     "8000",
-		user:     "admin2",
-		password: "adminpass",
+		scheme:   getEnv("CB_ONEFUSE_CFG_SCHEME", "https"),
+		address:  getEnv("CB_ONEFUSE_CFG_ADDRESS", "localhost"),
+		port:     getEnv("CB_ONEFUSE_CFG_PORT", "443"),
+		user:     getEnv("CB_ONEFUSE_CFG_USER", "admin"),
+		password: getEnv("CB_ONEFUSE_CFG_PASSWORD", "admin"),
 	}
 	return config
+}
+
+func getEnv(key string, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultVal
 }

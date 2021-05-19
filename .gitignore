@@ -5,3 +5,5 @@ crash.log
 .terraform
 terraform-provider-*
 terraform.tfstate.backup
+.*.swp
+.*.swo
