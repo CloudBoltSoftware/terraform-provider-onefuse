@@ -12,7 +12,7 @@ provider "vsphere" {
 
 #Data Sources
 data "vsphere_datacenter" "datacenter {
-  name = "SovLabs"
+  name = "datacenter01"
 }
 
 data "vsphere_datastore_cluster" "datastore_cluster" {
@@ -39,9 +39,8 @@ data "vsphere_virtual_machine" "template" {
 #Virtual Machine Resource
 resource "vsphere_virtual_machine" "vsphereweb1" {
 
-
-    // Use OneFuse generated name for VM hostname and domain
-    name = onefuse_naming.machine-name.name
+  // Use OneFuse generated name for VM hostname and domain
+  name = onefuse_naming.machine-name.name
 
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_cluster_id = data.vsphere_datastore_cluster.datastore_cluster.id
@@ -70,8 +69,8 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
  
     customize {
       linux_options {
-        host_name  = onefuse_naming.machine-name.name //  Assign name from OneFuse naming resource
-        domain = onefuse_naming.machine-name.dns_suffix // Assign DNS Suffix from OneFuse naming resource
+        host_name  = onefuse_naming.machine-name.name                 //  Assign name from OneFuse naming resource
+        domain = onefuse_naming.machine-name.dns_suffix               // Assign DNS Suffix from OneFuse naming resource
       }
  
       network_interface {
@@ -79,7 +78,7 @@ resource "vsphere_virtual_machine" "vsphereweb1" {
         ipv4_netmask = 24
       }
  
-      ipv4_gateway = onefuse_ipam_record.my-ipam-record.gateway // Assign gateway from OneFuse ipam resource
+      ipv4_gateway = onefuse_ipam_record.my-ipam-record.gateway     // Assign gateway from OneFuse ipam resource
     }
   }
 }

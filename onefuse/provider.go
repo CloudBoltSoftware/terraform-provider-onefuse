@@ -59,6 +59,8 @@ func Provider() *schema.Provider {
 			"onefuse_ipam_record":                   resourceIPAMReservation(),
 			"onefuse_ansible_tower_deployment":      resourceAnsibleTowerDeployment(),
 			"onefuse_scripting_deployment":          resourceScriptingDeployment(),
+			"onefuse_vra_deployment":                resourceVraDeployment(),
+			"onefuse_servicenow_cmdb_deployment":    resourceServicenowCMDBDeployment(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"onefuse_microsoft_endpoint":   dataSourceMicrosoftEndpoint(),
@@ -70,6 +72,7 @@ func Provider() *schema.Provider {
 			"onefuse_dns_policy":           dataSourceDNSPolicy(),
 			"onefuse_scripting_policy":     dataSourceScriptingPolicy(),
 			"onefuse_ansible_tower_policy": dataSourceAnsibleTowerPolicy(),
+			"onefuse_servicenow_cmdb_policy": dataSourceServicenowCMDBPolicy(),
 		},
 		ConfigureFunc: configureProvider,
 	}

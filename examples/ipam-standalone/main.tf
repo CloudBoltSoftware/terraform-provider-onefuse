@@ -1,5 +1,4 @@
-// Commented out for Terraform 0.12
-
+// Comment out for Terraform 0.12
 terraform {
   required_providers {
     onefuse = {
@@ -9,11 +8,10 @@ terraform {
   }
   required_version = ">= 0.13"
 }
-
 // Comment out above for Terraform 0.12
 
 
-// Inititalize OneFuse Provider
+// Initialize OneFuse Provider
 provider "onefuse" {
   scheme     = "https"
   address    = "onefuse_fqdn"
@@ -23,20 +21,20 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// IPAM Policy data source
-data "onefuse_ipam_policy" "ipam_policy" {
-  name = "infoblox851_ipampolicy"
+// Policy Data Source: IPAM
+data "onefuse_ipam_policy" "default" {
+  name = "default"
 }
 
-// IPAM reservation resource
+// IP Address Object Resource
 resource "onefuse_ipam_record" "my-ipam-record" {
-    hostname = "testname"
-    policy_id = data.onefuse_ipam_policy.ipam_policy.id // Refers to onefuse_ipam_policy data source to retrieve ID
-    workspace_url = "" // Leave blank for default workspace
-    template_properties = {
-        property1        = "value1" // Your properties and values to pass into module
-        property2        = "value2"
-        property3        = "value3"
+  hostname      = "hostname"
+  policy_id     = data.onefuse_ipam_policy.default.id // Refers to onefuse_ipam_policy data source to retrieve ID
+  workspace_url = ""                                  // Leave blank for default workspace
+  template_properties = {                             // Your properties and its values to pass into module
+    property1 = "value1"
+    property2 = "value2"
+    property3 = "value3"
   }
 }
 
@@ -66,4 +64,8 @@ output "primary_dns" {
 
 output "secondary_dns" {
   value = onefuse_ipam_record.my-ipam-record.secondary_dns
+}
+
+output "nic_label" {
+  value = onefuse_ipam_record.my-ipam-record.nic_label
 }

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     onefuse = {
       source  = "CloudBoltSoftware/onefuse"
-      version = ">= 1.10.1"
+      version = ">= 1.10.3"
     }
   }
   required_version = ">= 0.13"
@@ -21,24 +21,23 @@ provider "onefuse" {
   verify_ssl = "false"
 }
 
-// Policy Data Source: Active Directory
-data "onefuse_ad_policy" "default" {
-  name = "default"
-}
-
-// AD Computer Object Resource
-resource "onefuse_microsoft_ad_computer_account" "my_ad_computer" {
-  name          = "myhostname"
-  policy_id     = data.onefuse_ad_policy.default.id // Refers to onefuse_ad_policy data source to retrieve ID
-  workspace_url = ""                                // Leave blank for default workspace
+// vRealize Automation Deployment Resource
+resource "onefuse_vra_deployment" "vra_deployment_01" {
+  policy_id       = 1                               // Refers to vRealize Automation Policy ID (integer)
+  workspace_url   = ""                              // Leave blank for default workspace
+  deployment_name = "tf_vra_deployment"             // vRA Deployment Name
   template_properties = {                           // Your properties and its values to pass into module
     property1 = "value1"
     property2 = "value2"
     property3 = "value3"
   }
+  timeouts {
+    create = "12m"
+    delete = "3m"
+  }
 }
 
-// Output Result for AD OU Placement
-output "ad_ou" {
-  value = onefuse_microsoft_ad_computer_account.my_ad_computer.final_ou
+// Output
+output "deployment_info" {
+  value = onefuse_vra_deployment.vra_deployment_01.deployment_info
 }
