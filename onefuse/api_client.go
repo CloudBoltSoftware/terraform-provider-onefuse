@@ -31,6 +31,8 @@ const WorkspaceResourceType = "workspaces"
 const MicrosoftADPolicyResourceType = "microsoftADPolicies"
 const MicrosoftADComputerAccountResourceType = "microsoftADComputerAccounts"
 const ModuleEndpointResourceType = "endpoints"
+const ModulePolicyResourceType = "modulePolicies"
+const ModuleDepoloymentResourceType = "moduleManagedObjects"
 const DNSReservationResourceType = "dnsReservations"
 const IPAMReservationResourceType = "ipamReservations"
 const StaticPropertySetResourceType = "propertySets"
@@ -443,6 +445,41 @@ type VraDeployment struct {
 	DeploymentInfo     map[string]interface{} `json:"deploymentInfo,omitempty"`
 	BlueprintName      string                 `json:"blueprintName,omitempty"`
 	ProjectName        string                 `json:"projectName,omitempty"`
+}
+
+type ModuleDeployment struct {
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+	ID                       int                    `json:"id,omitempty"`
+	PolicyID                 int                    `json:"policyId,omitempty"`
+	Policy                   string                 `json:"policy,omitempty"`
+	WorkspaceURL             string                 `json:"workspace,omitempty"`
+	Name                     string                 `json:"name,omitempty"`
+	Archived                 bool                   `json:"archived,omitempty"`
+	TemplateProperties       map[string]interface{} `json:"templateProperties"`
+	ProvisioningJobResults   map[string]interface{} `json:"provisioningJobResults,omitempty"`
+	DeprovisioningJobResults map[string]interface{} `json:"deprovisioningJobResults,omitempty"`
+}
+
+type ModulePolicyResponse struct {
+	Embedded struct {
+		ModulePolicies []ModulePolicy `json:"modulePolicies"`
+	} `json:"_embedded"`
+}
+
+type ModulePolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID             int    `json:"id,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Description    string `json:"description,omitempty"`
+	PolicyTemplate string `json:"policyTemplate,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -1735,6 +1772,139 @@ func (apiClient *OneFuseAPIClient) DeleteServicenowCMDBDeployment(id int) error 
 }
 
 // End ServiceNow CMDB Deployment
+
+// Start Module Policies
+
+func (apiClient *OneFuseAPIClient) GetModulePolicy(id int) (*ModulePolicy, error) {
+	log.Println("onefuse.apiClient: GetModulePolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetModulePolicyByName(name string) (*ModulePolicy, error) {
+	log.Println("onefuse.apiClient: GetModulePolicyByName")
+
+	config := apiClient.config
+
+	modulePolicies := ModulePolicyResponse{}
+	entity, err := findEntityByName(config, name, ModulePolicyResourceType, &modulePolicies, "ModulePolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	modulePolicy := entity.(ModulePolicy)
+	return &modulePolicy, nil
+}
+
+// End Module Policies
+
+// Start Module Deployment
+
+func (apiClient *OneFuseAPIClient) CreateModuleDeployment(newModuleDeployment *ModuleDeployment) (*ModuleDeployment, error) {
+	log.Println("onefuse.apiClient: CreateModuleDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if newModuleDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, newModuleDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if newModuleDeployment.Policy == "" {
+		if newModuleDeployment.PolicyID != 0 {
+			newModuleDeployment.Policy = itemURL(config, WorkspaceResourceType, newModuleDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: Module Deployment Create requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: Module Deployment Create requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPostRequest(config, ModuleDepoloymentResourceType, newModuleDeployment); err != nil {
+		return nil, err
+	}
+
+	ModuleDeployment := ModuleDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &ModuleDeployment, "POST")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ModuleDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) GetModuleDeployment(id int) (*ModuleDeployment, error) {
+	log.Println("onefuse.apiClient: GetModuleDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ModuleDepoloymentResourceType, id)
+
+	ModuleDeployment := ModuleDeployment{}
+	err := doGet(config, url, &ModuleDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &ModuleDeployment, err
+}
+
+func (apiClient *OneFuseAPIClient) UpdateModuleDeployment(id int, updatedModuleDeployment *ModuleDeployment) (*ModuleDeployment, error) {
+	log.Println("onefuse.apiClient: UpdateModuleDeployment")
+
+	config := apiClient.config
+
+	var err error
+	if updatedModuleDeployment.WorkspaceURL, err = findWorkspaceURLOrDefault(config, updatedModuleDeployment.WorkspaceURL); err != nil {
+		return nil, err
+	}
+
+	if updatedModuleDeployment.Policy == "" {
+		if updatedModuleDeployment.PolicyID != 0 {
+			updatedModuleDeployment.Policy = itemURL(config, WorkspaceResourceType, updatedModuleDeployment.PolicyID)
+		} else {
+			return nil, errors.New("onefuse.apiClient: Module Deployment Update requires a PolicyID or Policy URL")
+		}
+	} else {
+		return nil, errors.New("onefuse.apiClient: Module Deployment Update requires a PolicyID or Policy URL")
+	}
+
+	var req *http.Request
+	if req, err = buildPutRequest(config, ModuleDepoloymentResourceType, updatedModuleDeployment, id); err != nil {
+		return nil, err
+	}
+
+	ModuleDeployment := ModuleDeployment{}
+
+	_, err = handleAsyncRequestAndFetchManagdObject(req, config, &ModuleDeployment, "PUT")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ModuleDeployment, nil
+}
+
+func (apiClient *OneFuseAPIClient) DeleteModuleDeployment(id int) error {
+	log.Println("onefuse.apiClient: DeleteModuleDeployment")
+
+	config := apiClient.config
+
+	url := itemURL(config, ModuleDepoloymentResourceType, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("onefuse.apiClient: Failed to create request DELETE %s", url))
+	}
+
+	setHeaders(req, config)
+
+	if _, err = handleAsyncRequest(req, config, "DELETE"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// End Module Deployment
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	fmt.Println("onefuse.findDefaultWorkspaceID")
