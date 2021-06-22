@@ -269,6 +269,22 @@ type DNSPolicy struct {
 	Description string `json:"description,omitempty"`
 }
 
+type VRAPolicyResponse struct {
+	Embedded struct {
+		VRAPolicies []VRAPolicy `json:"vraPolicies"`
+	} `json:"_embedded"`
+}
+
+type VRAPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 type ServicenowCMDBPolicyResponse struct {
 	Embedded struct {
 		ServicenowCMDBPolicies []ServicenowCMDBPolicy `json:"servicenowCMDBPolicies"`
@@ -297,8 +313,8 @@ type ServicenowCMDBDeployment struct {
 	Policy                 string                   `json:"policy,omitempty"`
 	WorkspaceURL           string                   `json:"workspace,omitempty"`
 	ConfigurationItemsInfo []map[string]interface{} `json:"configurationItemsInfo,omitempty"`
-	ExecutionDetails	   map[string]interface{}   `json:"executionDetails,omitempty"`
-	Archived           	   bool                     `json:"archived,omitempty"`
+	ExecutionDetails       map[string]interface{}   `json:"executionDetails,omitempty"`
+	Archived               bool                     `json:"archived,omitempty"`
 	TemplateProperties     map[string]interface{}   `json:"templateProperties"`
 }
 
@@ -1398,6 +1414,29 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 }
 
 // End Static Property Set
+
+// Start vRA Policies
+
+func (apiClient *OneFuseAPIClient) GetVRAPolicy(id int) (*VRAPolicy, error) {
+	log.Println("onefuse.apiClient: VRAPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetVRAPolicyByName(name string) (*VRAPolicy, error) {
+	log.Println("onefuse.apiClient: GetVRAPolicyByName")
+
+	config := apiClient.config
+
+	vraPolicies := VRAPolicyResponse{}
+	entity, err := findEntityByName(config, name, VRAPolicyResourceType, &vraPolicies, "VRAPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	vraPolicy := entity.(VRAPolicy)
+	return &vraPolicy, nil
+}
+
+// End vRA Policies
 
 // Start Jobs
 
