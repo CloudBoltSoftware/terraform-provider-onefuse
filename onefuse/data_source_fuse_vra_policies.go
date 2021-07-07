@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func dataSourceVRAPolicy() *schema.Resource {
+func dataSourceVraPolicy() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceVRAPolicyRead,
+		Read: dataSourceVraPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -34,16 +34,16 @@ func dataSourceVRAPolicy() *schema.Resource {
 	}
 }
 
-func dataSourceVRAPolicyRead(d *schema.ResourceData, meta interface{}) error {
-	log.Println("onefuse.dataSourceVRAPolicyRead")
+func dataSourceVraPolicyRead(d *schema.ResourceData, meta interface{}) error {
+	log.Println("onefuse.dataSourceVraPolicyRead")
 
 	config := meta.(Config)
 	apiClient := config.NewOneFuseApiClient()
 
-	varPolicy, err := apiClient.GetVRAPolicyByName(d.Get("name").(string))
+	vraPolicy, err := apiClient.GetVraPolicyByName(d.Get("name").(string))
 
 	if err != nil {
-		return fmt.Errorf("Error loading VRA Policy: %s", err)
+		return fmt.Errorf("Error loading vRA Policy: %s", err)
 	}
 
 	d.SetId(strconv.Itoa(vraPolicy.ID))
