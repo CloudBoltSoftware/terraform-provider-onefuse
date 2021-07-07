@@ -43,9 +43,9 @@ const ScriptingPolicyResourceType = "scriptingPolicies"
 const JobStatusResourceType = "jobStatus"
 const ScriptingDepoloymentResourceType = "scriptingDeployments"
 const VraDeploymentResourceType = "vraDeployments"
-const VraPolicyResourceType = "vraPolicies"
 const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
 const ServicenowCMDBDepoloymentResourceType = "servicenowCMDBDeployments"
+const VraPolicyResourceType = "vraPolicies"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -297,8 +297,8 @@ type ServicenowCMDBDeployment struct {
 	Policy                 string                   `json:"policy,omitempty"`
 	WorkspaceURL           string                   `json:"workspace,omitempty"`
 	ConfigurationItemsInfo []map[string]interface{} `json:"configurationItemsInfo,omitempty"`
-	ExecutionDetails	   map[string]interface{}   `json:"executionDetails,omitempty"`
-	Archived           	   bool                     `json:"archived,omitempty"`
+	ExecutionDetails       map[string]interface{}   `json:"executionDetails,omitempty"`
+	Archived               bool                     `json:"archived,omitempty"`
 	TemplateProperties     map[string]interface{}   `json:"templateProperties"`
 }
 
@@ -427,6 +427,22 @@ type VraDeployment struct {
 	DeploymentInfo     map[string]interface{} `json:"deploymentInfo,omitempty"`
 	BlueprintName      string                 `json:"blueprintName,omitempty"`
 	ProjectName        string                 `json:"projectName,omitempty"`
+}
+
+type VraPolicyResponse struct {
+	Embedded struct {
+		VraPolicies []VraPolicy `json:"vraPolicies"`
+	} `json:"_embedded"`
+}
+
+type VraPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -1367,6 +1383,29 @@ func (apiClient *OneFuseAPIClient) GetServicenowCMDBPolicyByName(name string) (*
 }
 
 // End ServicenowCMDB Policies
+
+// Start vRA Policies
+
+func (apiClient *OneFuseAPIClient) GetVraPolicy(id int) (*VraPolicy, error) {
+	log.Println("onefuse.apiClient: VraPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetVraPolicyByName(name string) (*VraPolicy, error) {
+	log.Println("onefuse.apiClient: GetVraPolicyByName")
+
+	config := apiClient.config
+
+	vraPolicies := VraPolicyResponse{}
+	entity, err := findEntityByName(config, name, VraPolicyResourceType, &vraPolicies, "VraPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	vraPolicy := entity.(VraPolicy)
+	return &vraPolicy, nil
+}
+
+// End vRA Policies
 
 // Start Static Property Set
 
