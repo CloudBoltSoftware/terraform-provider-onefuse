@@ -45,9 +45,9 @@ const ScriptingPolicyResourceType = "scriptingPolicies"
 const JobStatusResourceType = "jobStatus"
 const ScriptingDepoloymentResourceType = "scriptingDeployments"
 const VraDeploymentResourceType = "vraDeployments"
-const VraPolicyResourceType = "vraPolicies"
 const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
 const ServicenowCMDBDepoloymentResourceType = "servicenowCMDBDeployments"
+const VraPolicyResourceType = "vraPolicies"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -271,22 +271,6 @@ type DNSPolicy struct {
 	Description string `json:"description,omitempty"`
 }
 
-type VRAPolicyResponse struct {
-	Embedded struct {
-		VRAPolicies []VRAPolicy `json:"vraPolicies"`
-	} `json:"_embedded"`
-}
-
-type VRAPolicy struct {
-	Links *struct {
-		Self      LinkRef `json:"self,omitempty"`
-		Workspace LinkRef `json:"workspace,omitempty"`
-	} `json:"_links,omitempty"`
-	ID          int    `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
 type ServicenowCMDBPolicyResponse struct {
 	Embedded struct {
 		ServicenowCMDBPolicies []ServicenowCMDBPolicy `json:"servicenowCMDBPolicies"`
@@ -447,6 +431,21 @@ type VraDeployment struct {
 	ProjectName        string                 `json:"projectName,omitempty"`
 }
 
+type VraPolicyResponse struct {
+	Embedded struct {
+		VraPolicies []VraPolicy `json:"vraPolicies"`
+	} `json:"_embedded"`
+}
+
+type VraPolicy struct {
+	Links *struct {
+		Self      LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+	} `json:"_links,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
 type ModuleDeployment struct {
 	Links *struct {
 		Self        LinkRef `json:"self,omitempty"`
@@ -1421,6 +1420,29 @@ func (apiClient *OneFuseAPIClient) GetServicenowCMDBPolicyByName(name string) (*
 
 // End ServicenowCMDB Policies
 
+// Start vRA Policies
+
+func (apiClient *OneFuseAPIClient) GetVraPolicy(id int) (*VraPolicy, error) {
+	log.Println("onefuse.apiClient: VraPolicy")
+	return nil, errors.New("onefuse.apiClient: Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) GetVraPolicyByName(name string) (*VraPolicy, error) {
+	log.Println("onefuse.apiClient: GetVraPolicyByName")
+
+	config := apiClient.config
+
+	vraPolicies := VraPolicyResponse{}
+	entity, err := findEntityByName(config, name, VraPolicyResourceType, &vraPolicies, "VraPolicies", "")
+	if err != nil {
+		return nil, err
+	}
+	vraPolicy := entity.(VraPolicy)
+	return &vraPolicy, nil
+}
+
+// End vRA Policies
+
 // Start Static Property Set
 
 func (apiClient *OneFuseAPIClient) GetStaticPropertySet(id int) (*StaticPropertySet, error) {
@@ -1451,29 +1473,6 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 }
 
 // End Static Property Set
-
-// Start vRA Policies
-
-func (apiClient *OneFuseAPIClient) GetVRAPolicy(id int) (*VRAPolicy, error) {
-	log.Println("onefuse.apiClient: VRAPolicy")
-	return nil, errors.New("onefuse.apiClient: Not implemented yet")
-}
-
-func (apiClient *OneFuseAPIClient) GetVRAPolicyByName(name string) (*VRAPolicy, error) {
-	log.Println("onefuse.apiClient: GetVRAPolicyByName")
-
-	config := apiClient.config
-
-	vraPolicies := VRAPolicyResponse{}
-	entity, err := findEntityByName(config, name, VRAPolicyResourceType, &vraPolicies, "VRAPolicies", "")
-	if err != nil {
-		return nil, err
-	}
-	vraPolicy := entity.(VRAPolicy)
-	return &vraPolicy, nil
-}
-
-// End vRA Policies
 
 // Start Jobs
 

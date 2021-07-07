@@ -74,8 +74,8 @@ func Provider() *schema.Provider {
 			"onefuse_scripting_policy":       dataSourceScriptingPolicy(),
 			"onefuse_ansible_tower_policy":   dataSourceAnsibleTowerPolicy(),
 			"onefuse_servicenow_cmdb_policy": dataSourceServicenowCMDBPolicy(),
-			"onefuse_vra_policy":             dataSourceVRAPolicy(),
 			"onefuse_module_policy":          dataSourceModulePolicy(),
+			"onefuse_vra_policy":             dataSourceVraPolicy(),
 		},
 		ConfigureFunc: configureProvider,
 	}
