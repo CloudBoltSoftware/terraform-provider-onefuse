@@ -1455,7 +1455,7 @@ func (apiClient *OneFuseAPIClient) GetStaticPropertySetByName(name string) (*Sta
 	config := apiClient.config
 
 	staticPropertySets := StaticPropertySetResponse{}
-	entity, err := findEntityByName(config, name, StaticPropertySetResourceType, &staticPropertySets, "PropertySets", ";type:static")
+	entity, err := findEntityByName(config, name, StaticPropertySetResourceType, &staticPropertySets, "PropertySets")
 	if err != nil {
 		return nil, err
 	}
