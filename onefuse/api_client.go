@@ -189,7 +189,6 @@ type StaticPropertySet struct {
 		Workspace LinkRef `json:"workspace,omitempty"`
 	} `json:"_links,omitempty"`
 	ID          int                    `json:"id,omitempty"`
-	Type        string                 `json:"type,omitempty"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Properties  map[string]interface{} `json:"properties,omitempty"`
