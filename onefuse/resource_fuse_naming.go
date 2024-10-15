@@ -9,6 +9,9 @@ package onefuse
 import (
 	"log"
 	"time"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -20,6 +23,9 @@ func resourceCustomNaming() *schema.Resource {
 		Read:   resourceCustomNameRead,
 		Update: resourceCustomNameUpdate,
 		Delete: resourceCustomNameDelete,
+		Importer: &schema.ResourceImporter{
+			State: importNaming,
+		},
 		Schema: map[string]*schema.Schema{
 			"custom_name_id": {
 				Type:     schema.TypeInt,
@@ -123,4 +129,74 @@ func resourceCustomNameDelete(d *schema.ResourceData, m interface{}) error {
 	id := d.Get("custom_name_id").(int)
 
 	return config.NewOneFuseApiClient().DeleteCustomName(id)
+}
+
+func importNaming(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Println("onefuse.importNaming - Starting the import")
+
+	d.SetId(d.Id())
+	customNameID, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("invalid ID format: %s", d.Id())
+	}
+
+	config := meta.(Config)
+	apiClient := config.NewOneFuseApiClient()
+
+	customName, err := apiClient.GetCustomName(customNameID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Bind the custom name
+	if err := bindCustomNamingResource(d, customName); err != nil {
+		return nil, err
+	}
+
+	jobMetaDataRecord, policyId, err := fetchNameJobMetaData(customName, &config)
+	if err != nil {
+		log.Printf("Error fetching job metadata: %v", err)
+		return nil, errors.Wrap(err, "error fetching job metadata during import")
+	}
+
+	if jobMetaDataRecord == nil {
+		log.Println("jobMetaDataRecord is nil after fetching job metadata")
+		return nil, errors.New("jobMetaDataRecord is nil after fetching job metadata")
+	}
+
+	if policyId == "" {
+		log.Println("Naming policy id is nil after fetching job metadata")
+		return nil, errors.New("Naming policy id is nil after fetching job metadata")
+	}
+
+	log.Printf("Template Properties are: %+v", jobMetaDataRecord.ResolvedProperties)
+	if err := d.Set("naming_policy_id", policyId); err != nil {
+		log.Printf("Error setting policy id: %v", err)
+		return nil, errors.Wrap(err, "Cannot set policyId")
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func fetchNameJobMetaData(customName *CustomName, config *Config) (jobMetaDataRecord *JobMetaData, policyIdStr string, err error) {
+    log.Println("Fetching the job metadata - Start")
+
+    jobMetaDataURLSplit := strings.Split(customName.Links.JobMetadata.Href, "/")
+    policyURLSplit := strings.Split(customName.Links.Policy.Href, "/")
+    jobMetaDataId := jobMetaDataURLSplit[len(jobMetaDataURLSplit)-2]
+    policyIdStr = policyURLSplit[len(policyURLSplit)-2]
+
+    jobMetaDataIdInt, err := strconv.Atoi(jobMetaDataId)
+    if err != nil {
+        return nil, "", errors.Wrap(err, "failed to convert job metadata ID to int")
+    }
+
+    jobMetaDataRecord, err = GetJobMetaData(jobMetaDataIdInt, config)
+    if err != nil {
+        return nil, "", errors.Wrap(err, "failed to fetch job metadata")
+    }
+
+	log.Println("Fetching the job metadata - Completed")
+
+    return jobMetaDataRecord, policyIdStr, nil
 }

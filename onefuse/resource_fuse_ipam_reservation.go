@@ -22,6 +22,9 @@ func resourceIPAMReservation() *schema.Resource {
 		Read:   resourceIPAMReservationRead,
 		Update: resourceIPAMReservationUpdate,
 		Delete: resourceIPAMReservationDelete,
+		Importer: &schema.ResourceImporter{
+			State: importIPAMReservation,
+	    },
 		Schema: map[string]*schema.Schema{
 			"hostname": {
 				Type:     schema.TypeString,
@@ -300,4 +303,72 @@ func resourceIPAMReservationDelete(d *schema.ResourceData, m interface{}) error 
 	}
 
 	return config.NewOneFuseApiClient().DeleteIPAMReservation(intID)
+}
+
+func importIPAMReservation(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+    log.Println("onefuse.importIPAMReservation - Starting the import")
+
+    config, ok := meta.(Config)
+    if !ok {
+        return nil, errors.New("invalid meta type")
+    }
+
+    id := d.Id()
+    intID, err := strconv.Atoi(id)
+    if err != nil {
+        log.Printf("Error converting ID to int: %v", err)
+        return nil, errors.Wrap(err, "invalid ID format")
+    }
+
+    ipamRecord, err := config.NewOneFuseApiClient().GetIPAMReservation(intID)
+    if err != nil {
+        log.Printf("Error fetching IPAM reservation: %v", err)
+        return nil, errors.Wrap(err, "error fetching IPAM reservation")
+    }
+
+    // Bind the IPAM reservation
+    if err := bindIPAMReservationResource(d, ipamRecord); err != nil {
+        log.Printf("Error binding IPAM reservation resource: %v", err)
+        return nil, errors.Wrap(err, "failed to bind IPAM reservation data")
+    }
+
+    if err := d.Set("hostname", ipamRecord.Hostname); err != nil {
+        return nil, errors.Wrap(err, "Cannot set hostname: "+ipamRecord.Hostname)
+    }
+
+    jobMetaDataRecord, err := fetchIpamJobMetaData(ipamRecord, &config)
+    if err != nil {
+        log.Printf("Error fetching job metadata: %v", err)
+        return nil, errors.Wrap(err, "error fetching job metadata during import")
+    }
+
+    if jobMetaDataRecord == nil {
+        log.Println("jobMetaDataRecord is nil after fetching job metadata")
+        return nil, errors.New("jobMetaDataRecord is nil after fetching job metadata")
+    }
+
+    log.Printf("Template Properties are: %+v", jobMetaDataRecord.ResolvedProperties)
+	log.Println("onefuse.importIPAMReservation - import completed successfully")
+
+    return []*schema.ResourceData{d}, nil
+}
+
+func fetchIpamJobMetaData(ipamRecord *IPAMReservation, config *Config) (*JobMetaData, error) {
+    log.Println("Fetching the job metadata - Start")
+
+    jobMetaDataURLSplit := strings.Split(ipamRecord.Links.JobMetadata.Href, "/")
+    jobMetaDataId := jobMetaDataURLSplit[len(jobMetaDataURLSplit)-2]
+    jobMetaDataIdInt, err := strconv.Atoi(jobMetaDataId)
+    if err != nil {
+        return nil, errors.Wrap(err, "failed to convert job metadata ID to int")
+    }
+
+    jobMetaDataRecord, err := GetJobMetaData(jobMetaDataIdInt, config)
+    if err != nil {
+        return nil, errors.Wrap(err, "failed to fetch job metadata")
+    }
+
+	log.Println("Fetching the job metadata - Completed")
+
+    return jobMetaDataRecord, nil
 }

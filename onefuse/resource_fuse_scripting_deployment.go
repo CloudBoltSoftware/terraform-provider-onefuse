@@ -23,6 +23,9 @@ func resourceScriptingDeployment() *schema.Resource {
 		Read:   resourceScriptingDeploymentRead,
 		Update: resourceScriptingDeploymentUpdate,
 		Delete: resourceScriptingDeploymentDelete,
+		Importer: &schema.ResourceImporter{
+			State: importScriptingReservation,
+		},
 		Schema: map[string]*schema.Schema{
 			"hostname": {
 				Type:     schema.TypeString,
@@ -173,4 +176,67 @@ func resourceScriptingDeploymentDelete(d *schema.ResourceData, m interface{}) er
 	}
 
 	return config.NewOneFuseApiClient().DeleteScriptingDeployment(intID)
+}
+
+func importScriptingReservation(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Println("onefuse.importScriptingReservation - Starting the import")
+
+	config, ok := meta.(Config)
+	if !ok {
+		return nil, errors.New("invalid meta type")
+	}
+
+	id := d.Id()
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		log.Printf("Error converting ID to int: %v", err)
+		return nil, errors.Wrap(err, "invalid ID format")
+	}
+
+	scriptRecord, err := config.NewOneFuseApiClient().GetScriptingDeployment(intID)
+	if err != nil {
+		log.Printf("Error fetching script reservation: %v", err)
+		return nil, errors.Wrap(err, "error fetching script reservation")
+	}
+
+	// Bind the scripting reservation
+	if err := bindScriptingDeploymentResource(d, scriptRecord); err != nil {
+		log.Printf("Error binding script reservation resource: %v", err)
+		return nil, errors.Wrap(err, "failed to bind script reservation data")
+	}
+
+	jobMetaDataRecord, err := fetchScriptJobMetaData(scriptRecord, &config)
+	if err != nil {
+		log.Printf("Error fetching job metadata: %v", err)
+		return nil, errors.Wrap(err, "error fetching job metadata during import")
+	}
+
+	if jobMetaDataRecord == nil {
+		log.Println("jobMetaDataRecord is nil after fetching job metadata")
+		return nil, errors.New("jobMetaDataRecord is nil after fetching job metadata")
+	}
+
+	log.Printf("Template Properties are: %+v", jobMetaDataRecord.ResolvedProperties)
+	log.Println("onefuse.importScriptingReservation - import completed successfully")
+	return []*schema.ResourceData{d}, nil
+}
+
+func fetchScriptJobMetaData(scriptRecord *ScriptingDeployment, config *Config) (*JobMetaData, error){
+	log.Println("Fetching the job metadata - Start")
+
+	jobMetaDataURLSplit := strings.Split(scriptRecord.Links.JobMetadata.Href, "/")
+	jobMetaDataId := jobMetaDataURLSplit[len(jobMetaDataURLSplit)-2]
+	jobMetaDataIdInt, err := strconv.Atoi(jobMetaDataId)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert job metadata ID to int")
+	}
+
+	jobMetaDataRecord, err := GetJobMetaData(jobMetaDataIdInt, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch job metadata")
+	}
+
+	log.Println("Fetching the job metadata - Completed")
+
+	return jobMetaDataRecord, nil
 }

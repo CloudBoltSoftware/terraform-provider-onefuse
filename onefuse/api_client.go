@@ -48,6 +48,7 @@ const VraDeploymentResourceType = "vraDeployments"
 const ServicenowCMDBPolicyResourceType = "servicenowCMDBPolicies"
 const ServicenowCMDBDepoloymentResourceType = "servicenowCMDBDeployments"
 const VraPolicyResourceType = "vraPolicies"
+const JobMetaDataResourceType = "jobMetadata"
 
 const JobSuccess = "Successful"
 const JobFailed = "Failed"
@@ -60,6 +61,17 @@ type CustomName struct {
 	Id        int
 	Name      string
 	DnsSuffix string
+	Links *struct {
+		Self        LinkRef `json:"self,omitempty"`
+		Workspace   LinkRef `json:"workspace,omitempty"`
+		Policy      LinkRef `json:"policy,omitempty"`
+		JobMetadata LinkRef `json:"jobMetadata,omitempty"`
+	} `json:"_links,omitempty"`
+}
+
+type JobMetaData struct {
+    ID               int                    `json:"id"`
+    ResolvedProperties map[string]interface{} `json:"resolvedProperties"`
 }
 
 type LinkRef struct {
@@ -153,6 +165,7 @@ type DNSReservation struct {
 	Value              string                 `json:"value,omitempty"`
 	Zones              []string               `json:"zones,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
+	Records            []map[string]string    `json:"records"`
 }
 
 type IPAMReservation struct {
@@ -459,8 +472,16 @@ type ModuleDeployment struct {
 	Name                     string                 `json:"name,omitempty"`
 	Archived                 bool                   `json:"archived,omitempty"`
 	TemplateProperties       map[string]interface{} `json:"templateProperties"`
-	ProvisioningJobResults   map[string]interface{} `json:"provisioningJobResults,omitempty"`
-	DeprovisioningJobResults map[string]interface{} `json:"deprovisioningJobResults,omitempty"`
+	ProvisioningJobResults []struct {
+		Output          string `json:"output"`
+		Status          string `json:"status"`
+		JobTemplateName string `json:"jobTemplateName"`
+	} `json:"provisioningJobResults,omitempty"`
+	DeprovisioningJobResults []struct {
+		Output          string `json:"output"`
+		Status          string `json:"status"`
+		JobTemplateName string `json:"jobTemplateName"`
+	} `json:"deprovisioningJobResults,omitempty"`
 }
 
 type ModulePolicyResponse struct {
@@ -1490,6 +1511,20 @@ func GetJobStatus(id int, config *Config) (*JobStatus, error) {
 }
 
 // End Jobs
+
+func GetJobMetaData(id int, config *Config) (*JobMetaData, error) {
+    log.Println("onefuse.apiClient: GetJobMetaData")
+
+    url := itemURL(config, JobMetaDataResourceType, id)
+    result := JobMetaData{}
+
+    err := doGet(config, url, &result)
+    if err != nil {
+        return nil, err
+    }
+
+    return &result, nil
+}
 
 func handleAsyncRequestAndFetchManagdObject(req *http.Request, config *Config, responseObject interface{}, httpVerb string) (jobStatus *JobStatus, err error) {
 
