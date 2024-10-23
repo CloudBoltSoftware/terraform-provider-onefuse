@@ -187,6 +187,7 @@ type IPAMReservation struct {
 	Network            string                 `json:"network,omitempty"`
 	Subnet             string                 `json:"subnet,omitempty"`
 	DNSSuffix          string                 `json:"dnsSuffix,omitempty"`
+    DNSSearchSuffixes  string                 `json:"dnsSearchSuffixes,omitempty"`
 	Netmask            string                 `json:"netmask,omitempty"`
 	NicLabel           string                 `json:"nicLabel,omitempty"`
 	TemplateProperties map[string]interface{} `json:"template_properties,omitempty"`

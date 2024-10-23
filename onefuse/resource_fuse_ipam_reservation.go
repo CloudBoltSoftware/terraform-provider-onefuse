@@ -100,11 +100,9 @@ func resourceIPAMReservation() *schema.Resource {
 				Computed: true,
 			},
 			"dns_search_suffix": {
-				Type: schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Optional: true,
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
 			},
 			"template_properties": {
 				Type:     schema.TypeMap,
@@ -165,6 +163,10 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 		return errors.WithMessage(err, "Cannot set DNSSuffix: "+ipamRecord.DNSSuffix)
 	}
 
+	if err := d.Set("dns_search_suffix", ipamRecord.DNSSearchSuffixes); err != nil {
+			return errors.WithMessage(err, "Cannot set DNSSuffix: "+ipamRecord.DNSSearchSuffixes)
+	}
+
 	ipamPolicyURLSplit := strings.Split(ipamRecord.Links.Policy.Href, "/")
 	ipamPolicyID := ipamPolicyURLSplit[len(ipamPolicyURLSplit)-2]
 	ipamPolicyIDInt, _ := strconv.Atoi(ipamPolicyID)
@@ -178,9 +180,9 @@ func bindIPAMReservationResource(d *schema.ResourceData, ipamRecord *IPAMReserva
 func resourceIPAMReservationCreate(d *schema.ResourceData, m interface{}) error {
 	log.Println("onefuse.resourceIPAMReservationCreate")
 
-	var ipam_Suffixes []string
-	for _, group := range d.Get("dns_search_suffix").([]interface{}) {
-		ipam_Suffixes = append(ipam_Suffixes, group.(string))
+	dnsSearchSuffixesStr, ok := d.Get("dns_search_suffixes").(string)
+	if !ok {
+			dnsSearchSuffixesStr = ""
 	}
 
 	config := m.(Config)
@@ -197,6 +199,7 @@ func resourceIPAMReservationCreate(d *schema.ResourceData, m interface{}) error 
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
+        DNSSearchSuffixes:  dnsSearchSuffixesStr,
 		NicLabel:           d.Get("nic_label").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
@@ -252,9 +255,9 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		return nil
 	}
 
-	var ipam_Suffixes []string
-	for _, group := range d.Get("dns_search_suffix").([]interface{}) {
-		ipam_Suffixes = append(ipam_Suffixes, group.(string))
+	dnsSearchSuffixesStr, ok := d.Get("dns_search_suffixes").(string)
+	if !ok {
+		dnsSearchSuffixesStr = ""
 	}
 
 	// Make the API call to update the computer account
@@ -274,6 +277,7 @@ func resourceIPAMReservationUpdate(d *schema.ResourceData, m interface{}) error 
 		PrimaryDNS:         d.Get("primary_dns").(string),
 		SecondaryDNS:       d.Get("secondary_dns").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
+        DNSSearchSuffixes:  dnsSearchSuffixesStr,
 		NicLabel:           d.Get("nic_label").(string),
 		TemplateProperties: d.Get("template_properties").(map[string]interface{}),
 	}
