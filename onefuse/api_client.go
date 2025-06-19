@@ -165,7 +165,7 @@ type DNSReservation struct {
 	Value              string                 `json:"value,omitempty"`
 	Zones              []string               `json:"zones,omitempty"`
 	TemplateProperties map[string]interface{} `json:"templateProperties"`
-	Records            []map[string]string    `json:"records"`
+	Records            []map[string]string    `json:"records,omitempty"`
 }
 
 type IPAMReservation struct {
